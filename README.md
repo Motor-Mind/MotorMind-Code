@@ -1,4 +1,4 @@
-# MotorMind: Scaffolding General Vision Language Models for Zero-Shot Robot Manipulation**
+# MotorMind: Scaffolding General Vision Language Models for Zero-Shot Robot Manipulation
 
 MotorMind connects a frozen general-purpose vision-language model to robot control through mid-level actions and measured feedback. Concurrent monitoring and outcome verification support correction, recovery, and replanning without task-specific policy training.
 
