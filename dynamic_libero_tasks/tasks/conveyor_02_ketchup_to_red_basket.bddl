@@ -1,0 +1,91 @@
+(define (problem LIBERO_Dynamic_Tabletop_Manipulation)
+  (:domain robosuite)
+  (:language pick up the ketchup from the conveyor belt and place it in the red basket)
+    (:regions
+      (bbq_sauce_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1100 -0.3600 -0.0900 -0.3400)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (salad_dressing_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1100 -0.2100 -0.0900 -0.1900)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (ketchup_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1100 -0.0600 -0.0900 -0.0400)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (orange_juice_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1100 0.0900 -0.0900 0.1100)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (red_basket_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.3100 -0.3300 -0.2900 -0.3100)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+    )
+
+  (:fixtures
+    main_table - table
+  )
+
+  (:objects
+    bbq_sauce_1 - bbq_sauce
+    salad_dressing_1 - salad_dressing
+    ketchup_1 - ketchup
+    orange_juice_1 - orange_juice
+    red_basket_1 - red_basket
+  )
+
+  (:obj_of_interest
+    ketchup_1
+    red_basket_1
+  )
+
+  (:init
+    (On bbq_sauce_1 main_table_bbq_sauce_1_region)
+    (On salad_dressing_1 main_table_salad_dressing_1_region)
+    (On ketchup_1 main_table_ketchup_1_region)
+    (On orange_juice_1 main_table_orange_juice_1_region)
+    (On red_basket_1 main_table_red_basket_1_region)
+  )
+
+  (:goal
+    (And (On ketchup_1 red_basket_1))
+  )
+
+)

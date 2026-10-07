@@ -1,0 +1,104 @@
+(define (problem LIBERO_Dynamic_Tabletop_Manipulation)
+  (:domain robosuite)
+  (:language pick up the alphabet soup from the rotating platform and place it in the basket)
+    (:regions
+      (alphabet_soup_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1273 0.1594 -0.1073 0.1794)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (tomato_sauce_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.2298 0.0016 -0.2098 0.0216)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (bbq_sauce_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1114 -0.1445 -0.0914 -0.1245)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (ketchup_1_region
+          (:target main_table)
+          (:ranges (
+              (0.0642 -0.0771 0.0842 -0.0571)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (macaroni_and_cheese_1_region
+          (:target main_table)
+          (:ranges (
+              (0.0543 0.1107 0.0743 0.1307)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (basket_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.3100 -0.3300 -0.2900 -0.3100)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+    )
+
+  (:fixtures
+    main_table - table
+  )
+
+  (:objects
+    alphabet_soup_1 - alphabet_soup
+    tomato_sauce_1 - tomato_sauce
+    bbq_sauce_1 - bbq_sauce
+    ketchup_1 - ketchup
+    macaroni_and_cheese_1 - macaroni_and_cheese
+    basket_1 - basket
+  )
+
+  (:obj_of_interest
+    alphabet_soup_1
+    basket_1
+  )
+
+  (:init
+    (On alphabet_soup_1 main_table_alphabet_soup_1_region)
+    (On tomato_sauce_1 main_table_tomato_sauce_1_region)
+    (On bbq_sauce_1 main_table_bbq_sauce_1_region)
+    (On ketchup_1 main_table_ketchup_1_region)
+    (On macaroni_and_cheese_1 main_table_macaroni_and_cheese_1_region)
+    (On basket_1 main_table_basket_1_region)
+  )
+
+  (:goal
+    (And (On alphabet_soup_1 basket_1))
+  )
+
+)

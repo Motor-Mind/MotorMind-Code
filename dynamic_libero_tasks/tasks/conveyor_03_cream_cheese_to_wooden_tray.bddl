@@ -1,0 +1,91 @@
+(define (problem LIBERO_Dynamic_Tabletop_Manipulation)
+  (:domain robosuite)
+  (:language pick up the cream cheese from the conveyor belt and place it in the wooden tray)
+    (:regions
+      (cream_cheese_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1100 0.3400 -0.0900 0.3600)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (butter_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1100 0.1900 -0.0900 0.2100)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (chocolate_pudding_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1100 0.0400 -0.0900 0.0600)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (cookies_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1100 -0.1100 -0.0900 -0.0900)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (wooden_tray_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.3400 0.3500 -0.3200 0.3700)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+    )
+
+  (:fixtures
+    main_table - table
+  )
+
+  (:objects
+    cream_cheese_1 - cream_cheese
+    butter_1 - butter
+    chocolate_pudding_1 - chocolate_pudding
+    cookies_1 - cookies
+    wooden_tray_1 - wooden_tray
+  )
+
+  (:obj_of_interest
+    cream_cheese_1
+    wooden_tray_1
+  )
+
+  (:init
+    (On cream_cheese_1 main_table_cream_cheese_1_region)
+    (On butter_1 main_table_butter_1_region)
+    (On chocolate_pudding_1 main_table_chocolate_pudding_1_region)
+    (On cookies_1 main_table_cookies_1_region)
+    (On wooden_tray_1 main_table_wooden_tray_1_region)
+  )
+
+  (:goal
+    (And (On cream_cheese_1 wooden_tray_1))
+  )
+
+)

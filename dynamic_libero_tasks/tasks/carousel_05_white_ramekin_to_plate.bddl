@@ -1,0 +1,91 @@
+(define (problem LIBERO_Dynamic_Tabletop_Manipulation)
+  (:domain robosuite)
+  (:language pick up the white ramekin from the rotating platform and place it on the plate)
+    (:regions
+      (glazed_rim_porcelain_ramekin_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.2194 -0.0031 -0.1994 0.0169)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (red_ramekin_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.0569 -0.1394 -0.0369 -0.1194)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (akita_black_bowl_1_region
+          (:target main_table)
+          (:ranges (
+              (0.0794 0.0231 0.0994 0.0431)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (white_bowl_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.0831 0.1594 -0.0631 0.1794)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (plate_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.3100 -0.3300 -0.2900 -0.3100)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+    )
+
+  (:fixtures
+    main_table - table
+  )
+
+  (:objects
+    glazed_rim_porcelain_ramekin_1 - glazed_rim_porcelain_ramekin
+    red_ramekin_1 - red_ramekin
+    akita_black_bowl_1 - akita_black_bowl
+    white_bowl_1 - white_bowl
+    plate_1 - plate
+  )
+
+  (:obj_of_interest
+    glazed_rim_porcelain_ramekin_1
+    plate_1
+  )
+
+  (:init
+    (On glazed_rim_porcelain_ramekin_1 main_table_glazed_rim_porcelain_ramekin_1_region)
+    (On red_ramekin_1 main_table_red_ramekin_1_region)
+    (On akita_black_bowl_1 main_table_akita_black_bowl_1_region)
+    (On white_bowl_1 main_table_white_bowl_1_region)
+    (On plate_1 main_table_plate_1_region)
+  )
+
+  (:goal
+    (And (On glazed_rim_porcelain_ramekin_1 plate_1))
+  )
+
+)

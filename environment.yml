@@ -1,0 +1,29 @@
+# conda env create -f environment.yml && conda activate motormind && tools/setup_third_party.sh
+# Versions are the ones the published sweeps ran with (2026-09).
+name: motormind
+channels: [defaults]
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+      - numpy==1.26.4
+      - scipy==1.15.3
+      - mujoco==2.3.7
+      - robosuite==1.4.1
+      - bddl==1.0.1
+      - easydict==1.13
+      - gym==0.25.2
+      - h5py==3.16.0
+      - PyOpenGL==3.1.4
+      - opencv-python-headless==4.11.0.86
+      - imageio==2.37.4
+      - matplotlib==3.10.9
+      - pillow==12.3.0
+      - PyYAML==6.0.3
+      - pydantic==2.13.5
+      - httpx==0.28.1
+      - requests==2.34.2
+      - fastapi==0.141.1
+      - uvicorn==0.52.4
+      # optional, the xArm6 cuRobo pre-flight (robot.yaml curobo.enabled):
+      #   torch==2.7.1 (CUDA 12.8 wheels) + nvidia-curobo 0.8.0, see tools/setup_third_party.sh --curobo

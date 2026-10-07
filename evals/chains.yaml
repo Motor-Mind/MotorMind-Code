@@ -1,0 +1,198 @@
+# Every libero_10 task, decomposed into subgoals small enough for the executor to finish one
+# short motion at a time.
+#
+# Written as reusable chains rather than a few hundred hand-copied entries: all ten tasks are
+# built from the same handful of primitives, and a fix to "approach" should not have to be
+# made in eighty places. The task list at the bottom names the chains each task is built from;
+# evals/chain_spec.py expands them.
+#
+# Placeholders: {object} {object_name} {target} {target_name}
+# `check` is evaluated against MuJoCo by evals/checks.py -- ground truth, not the model's word.
+# `above_target` / `near_target` are resolved by the expander into the body or site form,
+# because some targets are objects and some are BDDL goal regions.
+#
+# max_cycles is a travel budget, not a patience setting. A step is at most 50 mm, so a subgoal
+# that has to cross 270 mm cannot finish in 6 cycles even when every cycle is perfect. These
+# The drawer subgoal gets 14 rather than 10 because its trace showed it still closing at ~15 mm
+# a cycle when the tenth ended, 117 mm from a 90 mm target, and 14 cycles passed it at 72 mm.
+# The rest were tried at 16 and measured WORSE, not better: the stove knob reached 45 mm at
+# cycle 10 and then wandered to 98 mm over the extra six, because nothing stops a subgoal that
+# has already arrived. More budget only helps a subgoal that is still closing.
+#
+# Every per-subgoal check is only a proxy for a step along the way. Whether the TASK was done
+# is decided by the environment's own goal predicate, which the runner reads separately.
+
+version: 1
+suite: libero_10
+
+chains:
+
+  # ---- getting the hand to a thing -------------------------------------------------
+  approach:
+    - name: "open_for_{object}"
+      subgoal: open the gripper fully
+      criterion: The robot reports the jaws as FULLY OPEN.
+      check: {fn: gripper_open, at_least_mm: 70}
+      max_cycles: 3
+    - name: "above_{object}"
+      subgoal: >
+        move the gripper horizontally until it is directly above the {object_name}, without
+        changing its height
+      criterion: The {object_name} is centred under the gripper in the wrist view.
+      check: {fn: above_object, body: "{object}", within_mm: 60}
+      max_cycles: 10
+    - name: "descend_to_{object}"
+      subgoal: >
+        lower the gripper straight down until the jaws straddle the {object_name}, without
+        moving sideways
+      criterion: The jaws are level with the {object_name} rather than above it.
+      check: {fn: near_object, body: "{object}", within_mm: 90}
+      max_cycles: 10
+
+  # ---- taking it, the five-subgoal way ---------------------------------------------
+  # One subgoal from open jaws to a grasp, as planner.yaml now asks for: the reach, the
+  # descent and the close in one budget, so the close is held to a residual the reach in
+  # front of it measured. Split across three subgoals -- the `approach` + `grasp` chains
+  # below -- each loop starts having measured nothing and the close is refused.
+  take:
+    - name: "take_{object}"
+      subgoal: >
+        open the jaws, get the gripper over the {object_name}, come down until the jaws are
+        level with the part you will squeeze, and close on it
+      criterion: The robot reports that it is HOLDING the {object_name}.
+      body: "{object}"
+      check: {fn: holding_object}
+      max_cycles: 10
+
+  # ---- taking it ------------------------------------------------------------------
+  grasp:
+    - name: "close_on_{object}"
+      subgoal: close the gripper
+      criterion: The robot reports the jaws as CLOSED, or as holding something.
+      check: {fn: gripper_closed_or_holding}
+      max_cycles: 3
+    - name: "lift_{object}"
+      subgoal: raise the gripper straight up by about 15 cm
+      criterion: The tool has risen at least 120 mm since this subgoal started.
+      check: {fn: moved_axis, axis: z, at_least_mm: 120}
+      max_cycles: 5
+
+  # ---- putting it somewhere -------------------------------------------------------
+  carry_to:
+    - name: "above_{target}"
+      subgoal: >
+        move the gripper horizontally until it is directly above the {target_name}, without
+        changing its height
+      criterion: The {target_name} is centred under the gripper in the wrist view.
+      check: {fn: above_target, within_mm: 80}
+      max_cycles: 12
+    - name: "lower_over_{target}"
+      subgoal: lower the gripper until it is just above the {target_name}
+      criterion: The gripper is close over the {target_name} rather than high above it.
+      check: {fn: near_target, within_mm: 140}
+      max_cycles: 10
+    - name: "release_over_{target}"
+      subgoal: open the gripper to release what it is holding
+      criterion: The robot reports the jaws as open and nothing held.
+      check: {fn: gripper_open, at_least_mm: 60}
+      max_cycles: 3
+    - name: "retreat_from_{target}"
+      subgoal: raise the gripper straight up by about 15 cm
+      criterion: The tool has risen at least 120 mm since this subgoal started.
+      check: {fn: moved_axis, axis: z, at_least_mm: 120}
+      max_cycles: 5
+
+  # ---- things that are not pick-and-place ------------------------------------------
+  press:
+    - name: "above_{object}"
+      subgoal: move the gripper until it is directly above the {object_name}
+      criterion: The {object_name} is centred under the gripper in the wrist view.
+      check: {fn: above_object, body: "{object}", within_mm: 50}
+      max_cycles: 10
+    - name: "press_{object}"
+      subgoal: lower the gripper onto the {object_name} to press it, then stop
+      criterion: The gripper has come down onto the {object_name}.
+      check: {fn: near_object, body: "{object}", within_mm: 80}
+      max_cycles: 10
+
+  pull_open:
+    - name: "above_{object}"
+      subgoal: move the gripper until it is directly above the {object_name}'s handle
+      criterion: The handle is under the gripper in the wrist view.
+      check: {fn: above_object, body: "{object}", within_mm: 90}
+      max_cycles: 14
+    - name: "grip_{object}"
+      subgoal: lower onto the handle and close the gripper on it
+      criterion: The robot reports the jaws closed on something.
+      check: {fn: gripper_closed_or_holding}
+      max_cycles: 6
+    - name: "pull_{object}"
+      subgoal: pull straight back, away from the cabinet, by about 20 cm
+      criterion: The tool has moved at least 150 mm backwards since this subgoal started.
+      check: {fn: moved_axis, axis: x, at_most_mm: -150}
+      max_cycles: 6
+
+  push_shut:
+    - name: "push_{object}"
+      subgoal: push forwards by about 20 cm to close it
+      criterion: The tool has moved at least 150 mm forwards since this subgoal started.
+      check: {fn: moved_axis, axis: x, at_least_mm: 150}
+      max_cycles: 6
+
+tasks:
+  0:
+    language: put both the alphabet soup and the tomato sauce in the basket
+    steps:
+      - {chain: [approach, grasp, carry_to], object: alphabet_soup_1_main, object_name: "alphabet soup can", target: basket_1_contain_region, target_kind: site, target_name: "wicker basket"}
+      - {chain: [approach, grasp, carry_to], object: tomato_sauce_1_main, object_name: "tomato sauce can", target: basket_1_contain_region, target_kind: site, target_name: "wicker basket"}
+  1:
+    language: put both the cream cheese box and the butter in the basket
+    steps:
+      - {chain: [approach, grasp, carry_to], object: cream_cheese_1_main, object_name: "cream cheese box", target: basket_1_contain_region, target_kind: site, target_name: "wicker basket"}
+      - {chain: [approach, grasp, carry_to], object: butter_1_main, object_name: "butter box", target: basket_1_contain_region, target_kind: site, target_name: "wicker basket"}
+  2:
+    language: turn on the stove and put the moka pot on it
+    steps:
+      - {chain: [press], object: flat_stove_1_button, object_name: "stove knob"}
+      - {chain: [approach, grasp, carry_to], object: moka_pot_1_main, object_name: "moka pot", target: flat_stove_1_cook_region, target_kind: site, target_name: "stove burner"}
+  3:
+    language: put the black bowl in the bottom drawer of the cabinet and close it
+    steps:
+      - {chain: [pull_open], object: white_cabinet_1_cabinet_bottom, object_name: "bottom drawer of the white cabinet"}
+      - {chain: [approach, grasp, carry_to], object: akita_black_bowl_1_main, object_name: "black bowl", target: white_cabinet_1_bottom_region, target_kind: site, target_name: "open bottom drawer"}
+      - {chain: [push_shut], object: white_cabinet_1_cabinet_bottom, object_name: "bottom drawer"}
+  4:
+    language: put the white mug on the left plate and the yellow and white mug on the right plate
+    steps:
+      - {chain: [approach, grasp, carry_to], object: porcelain_mug_1_main, object_name: "white porcelain mug", target: plate_1_main, target_kind: body, target_name: "left plate"}
+      - {chain: [approach, grasp, carry_to], object: white_yellow_mug_1_main, object_name: "yellow and white mug", target: plate_2_main, target_kind: body, target_name: "right plate"}
+  5:
+    language: pick up the book and place it in the back compartment of the caddy
+    steps:
+      - {chain: [approach, grasp, carry_to], object: black_book_1_main, object_name: "black book", target: desk_caddy_1_back_contain_region, target_kind: site, target_name: "back compartment of the desk caddy"}
+  6:
+    language: put the white mug on the plate and the chocolate pudding to the right of the plate
+    steps:
+      - {chain: [approach, grasp, carry_to], object: porcelain_mug_1_main, object_name: "white porcelain mug", target: plate_1_main, target_kind: body, target_name: "plate"}
+      # The goal predicate wants the pudding in living_room_table_plate_right_region, which
+      # sits 82 mm to the +y side of the plate -- NOT on it. Checking "above the plate" here
+      # would have passed exactly when the task had failed.
+      - {chain: [approach, grasp, carry_to], object: chocolate_pudding_1_main, object_name: "chocolate pudding box", target: living_room_table_plate_right_region, target_kind: site, target_name: "empty table space to the right of the plate"}
+  7:
+    language: put both the alphabet soup and the cream cheese box in the basket
+    steps:
+      - {chain: [approach, grasp, carry_to], object: alphabet_soup_1_main, object_name: "alphabet soup can", target: basket_1_contain_region, target_kind: site, target_name: "wicker basket"}
+      - {chain: [approach, grasp, carry_to], object: cream_cheese_1_main, object_name: "cream cheese box", target: basket_1_contain_region, target_kind: site, target_name: "wicker basket"}
+  8:
+    language: put both moka pots on the stove
+    # The language says nothing about the stove being on, but the goal predicate also requires
+    # (Turnon flat_stove_1), so the knob press belongs in the chain or the task cannot pass.
+    steps:
+      - {chain: [press], object: flat_stove_1_button, object_name: "stove knob"}
+      - {chain: [approach, grasp, carry_to], object: moka_pot_1_main, object_name: "nearer moka pot", target: flat_stove_1_cook_region, target_kind: site, target_name: "stove burner"}
+      - {chain: [approach, grasp, carry_to], object: moka_pot_2_main, object_name: "second moka pot", target: flat_stove_1_cook_region, target_kind: site, target_name: "stove burner"}
+  9:
+    language: put the yellow and white mug in the microwave and close it
+    steps:
+      - {chain: [approach, grasp, carry_to], object: white_yellow_mug_1_main, object_name: "yellow and white mug", target: microwave_1_heating_region, target_kind: site, target_name: "inside of the microwave"}
+      - {chain: [push_shut], object: microwave_1_microdoorroot, object_name: "microwave door"}

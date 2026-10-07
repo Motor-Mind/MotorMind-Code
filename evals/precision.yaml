@@ -1,0 +1,53 @@
+# Does the executor arrive at the RIGHT PART of an object, not just near it?
+#
+# "Above the butter" within 60 mm of its centre is a loose target: the box is 77 x 40 mm, so
+# a tool 55 mm off is over bare table and passes. These subgoals are scored against the
+# grasp point instead -- the middle of a box's top face, or the point on a bowl's rim nearest
+# the tool -- read out of the object's actual geometry (evals/checks.py::grasp_point). The
+# horizontal miss and the height are judged separately: within 25 mm sideways (the jaws open
+# to 79, the butter is 40 wide), and a height from touching the grasp point to 50 mm above it
+# (a rim grasp may sit a little below the rim, with the jaws around it). Each subgoal runs
+# from the task's initial state, after the scene has settled.
+#
+# The continuous number to compare runs by is the final horizontal gap in mm, not the
+# verdict: n=2 of a stochastic model cannot tell a 20 mm improvement from noise by pass/fail.
+#
+# Two scenes, chosen for having ONE of the object: identification is a different failure
+# from precision, and a scene with look-alikes measures the wrong one.
+
+version: 1
+suite: libero_10
+task_id: 0
+
+subgoals:
+  # libero_10 task 0: the butter is a distractor here, 123 mm from the tool, 77 x 40 x 18 mm.
+  - name: butter_top
+    suite: libero_10
+    task_id: 0
+    subgoal: >
+      bring the gripper to just above the centre of the top of the butter box, low enough to
+      grasp it: come down as you go, and keep correcting sideways so you stay over its middle
+    criterion: >
+      In the wrist view the butter box -- the small box with the red and white BUTTER label --
+      sits between the jaws with its middle centred in the gap, and the clearance below the
+      tool is down to roughly 30 mm. Judge this from the jaws once you are close.
+    check: {fn: at_grasp_point, body: butter_1_main, part: top, within_mm: 25, above_mm: [0, 50]}
+    max_cycles: 12
+
+  # libero_goal task 0: one black bowl, 128 mm from the tool, 111 mm across and 53 mm tall.
+  - name: bowl_rim
+    suite: libero_goal
+    task_id: 0
+    subgoal: >
+      bring the gripper to the rim of the black bowl where the jaws can pinch it: the LEFT or
+      RIGHT side of the bowl as the wrist camera sees it, where the rim runs up-down the
+      picture through the middle of the gap between the jaws, so one jaw is over the bowl's
+      inside and the other over the table outside. Come down as you go, and keep correcting
+      sideways so that stretch of rim stays centred between the jaws
+    criterion: >
+      In the wrist view the bowl's rim passes up-down the picture through the centre of the
+      gap between the jaws -- one jaw over the bowl's inside, the other over the table
+      outside it -- and the tool is level with the rim or a little below it. Judge this from
+      the jaws once you are close.
+    check: {fn: at_grasp_point, body: akita_black_bowl_1_main, part: rim, within_mm: 25, above_mm: [-10, 50]}
+    max_cycles: 12

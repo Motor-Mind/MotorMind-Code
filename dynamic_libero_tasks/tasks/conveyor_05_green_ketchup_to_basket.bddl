@@ -1,0 +1,78 @@
+(define (problem LIBERO_Dynamic_Tabletop_Manipulation)
+  (:domain robosuite)
+  (:language pick up the green ketchup from the conveyor belt and place it in the basket)
+    (:regions
+      (ketchup_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1100 0.3400 -0.0900 0.3600)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (blue_ketchup_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1100 0.1900 -0.0900 0.2100)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (green_ketchup_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1100 0.0400 -0.0900 0.0600)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (basket_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.3100 0.3100 -0.2900 0.3300)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+    )
+
+  (:fixtures
+    main_table - table
+  )
+
+  (:objects
+    ketchup_1 - ketchup
+    blue_ketchup_1 - blue_ketchup
+    green_ketchup_1 - green_ketchup
+    basket_1 - basket
+  )
+
+  (:obj_of_interest
+    green_ketchup_1
+    basket_1
+  )
+
+  (:init
+    (On ketchup_1 main_table_ketchup_1_region)
+    (On blue_ketchup_1 main_table_blue_ketchup_1_region)
+    (On green_ketchup_1 main_table_green_ketchup_1_region)
+    (On basket_1 main_table_basket_1_region)
+  )
+
+  (:goal
+    (And (On green_ketchup_1 basket_1))
+  )
+
+)

@@ -1,0 +1,91 @@
+(define (problem LIBERO_Dynamic_Tabletop_Manipulation)
+  (:domain robosuite)
+  (:language pick up the yellow milk from the rotating platform and place it in the basket)
+    (:regions
+      (yellow_milk_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1815 -0.0904 -0.1615 -0.0704)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (milk_1_region
+          (:target main_table)
+          (:ranges (
+              (0.0304 -0.1015 0.0504 -0.0815)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (orange_juice_1_region
+          (:target main_table)
+          (:ranges (
+              (0.0415 0.1104 0.0615 0.1304)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (red_orange_juice_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1704 0.1215 -0.1504 0.1415)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (basket_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.3100 0.3100 -0.2900 0.3300)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+    )
+
+  (:fixtures
+    main_table - table
+  )
+
+  (:objects
+    yellow_milk_1 - yellow_milk
+    milk_1 - milk
+    orange_juice_1 - orange_juice
+    red_orange_juice_1 - red_orange_juice
+    basket_1 - basket
+  )
+
+  (:obj_of_interest
+    yellow_milk_1
+    basket_1
+  )
+
+  (:init
+    (On yellow_milk_1 main_table_yellow_milk_1_region)
+    (On milk_1 main_table_milk_1_region)
+    (On orange_juice_1 main_table_orange_juice_1_region)
+    (On red_orange_juice_1 main_table_red_orange_juice_1_region)
+    (On basket_1 main_table_basket_1_region)
+  )
+
+  (:goal
+    (And (On yellow_milk_1 basket_1))
+  )
+
+)

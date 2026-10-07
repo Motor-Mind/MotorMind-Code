@@ -1,0 +1,11 @@
+type: circular
+center:
+- -0.06
+- 0.02
+omega: -0.157
+radius: 0.25
+moving:
+- red_salad_dressing_1
+- salad_dressing_1
+- ketchup_1
+- bbq_sauce_1

@@ -1,0 +1,69 @@
+# The xArm6 + G1 on the storm bridge, as any rig of it must be treated: the arm's model, the caps
+# the bridge enforces and the protocol. What is MEASURED on one particular rig -- its tool offset,
+# gripper counts, contact thresholds, table, cameras, colours, where its bridge is -- is in that
+# rig's profile, robot/rigs/<rig>.yaml, laid over this file key by key (STORM_RIG picks it;
+# robot/rigs/TEMPLATE.yaml lists every value and how to measure it).
+version: 1
+
+robot:
+  name: xarm6
+  axis_count: 6
+  tcp_offset_tolerance_mm: 1.0
+  # How far out, horizontally from the base, a motion can be relied on to go where it is
+  # sent.  SPEC, not measured on this rig: UFACTORY rate the xArm6 at a 700 mm working
+  # radius, which xarm6.urdf agrees with (284.5 + 342.5 + 97 mm of in-plane link from the
+  # shoulder).  The rating is the reach of a straight arm in its best direction; with the
+  # tool held vertical over a table the last of it is not there, and on the one arm where
+  # the falling-off HAS been measured -- the LIBERO Panda, rated 855 mm, degrading from
+  # 760 (evals/runs/v2-closegate/REACH.md section 2) -- that costs 11% of the rating.
+  # 11% of 700 is the margin below.  Measure the knee on this rig and replace both numbers
+  # with what it says.
+  rated_reach_mm: 700.0
+  reach_margin_mm: 78.0
+
+# Per-job caps the bridge enforces (adapter/xarm6/README.md section 4b).  The planner chunks longer
+# motions into several jobs and stays just inside these.
+limits:
+  max_translation_mm: 49.0      # bridge hard cap 50
+  max_rotation_rad: 0.095       # bridge hard cap 0.1 per roll/pitch/yaw component
+  # MEAN speed.  The bridge plays a cosine profile, whose PEAK is pi/2 = 1.571x the mean, and
+  # it caps the peak at 20 mm/s.  13.0 mean gives a 20.4 peak and is refused at validate
+  # ("peak Cartesian speed 20.418 mm/s over the 20 mm/s limit"), measured 2026-09-17.
+  # 12.5 mean -> 19.6 peak, just inside.
+  max_speed_mm_s: 12.5
+  max_rot_speed_deg_s: 10.0
+  min_duration_s: 0.2
+  max_duration_s: 120.0
+  # Refuse a whole plan larger than this, rather than emitting 40 chunks.
+  max_total_translation_mm: 400.0
+  max_total_rotation_deg: 90.0
+  max_chunks: 12
+  # Joint ranges the bridge enforces, degrees; used by the cuRobo pre-flight.
+  joint_limits_deg:
+    - [-360, 360]
+    - [-117, 116]
+    - [-219, 10]
+    - [-360, 360]
+    - [-97, 180]
+    - [-360, 360]
+
+defaults:
+  # Must not exceed limits.max_speed_mm_s: the planner clamps it silently, but a default
+  # above its own cap is a lie in the schema the operator reads.
+  speed_mm_s: 12.5
+  rot_speed_deg_s: 8.0
+  stop_on_contact: false
+bridge:
+  token_env: XARM_BRIDGE_TOKEN
+  confirmation: I_UNDERSTAND_ROBOT_WILL_MOVE
+  heartbeat_period_s: 0.3
+  state_poll_hz: 10
+  frames_poll_hz: 2
+  frames_size: 256
+
+# Optional cuRobo pre-flight (reachability + self-collision).  Cartesian jobs are the
+# execution path either way; cuRobo only ever says no before a job is posted.
+curobo:
+  enabled: false
+  urdf: robot/xarm6.urdf
+  config: robot/xarm6.yml

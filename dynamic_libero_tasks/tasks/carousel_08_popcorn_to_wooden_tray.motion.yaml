@@ -1,0 +1,12 @@
+type: circular
+center:
+- -0.06
+- 0.02
+omega: 0.157
+radius: 0.25
+moving:
+- popcorn_1
+- macaroni_and_cheese_1
+- cookies_1
+- yellow_cookies_1
+- alphabet_soup_1

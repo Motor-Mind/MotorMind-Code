@@ -1,0 +1,12 @@
+type: circular
+center:
+- -0.06
+- 0.02
+omega: 0.157
+radius: 0.25
+moving:
+- alphabet_soup_1
+- tomato_sauce_1
+- bbq_sauce_1
+- ketchup_1
+- macaroni_and_cheese_1

@@ -1,0 +1,16 @@
+type: linear
+start:
+- -0.1
+- 0.45
+end:
+- -0.1
+- -0.45
+speed: 0.025
+loop: false
+width: 0.14
+moving:
+- tomato_sauce_1
+- alphabet_soup_1
+- ketchup_1
+- cream_cheese_1
+- milk_1

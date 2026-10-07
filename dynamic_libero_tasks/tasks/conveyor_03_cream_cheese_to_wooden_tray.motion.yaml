@@ -1,0 +1,15 @@
+type: linear
+start:
+- -0.1
+- 0.45
+end:
+- -0.1
+- -0.45
+speed: 0.02
+loop: false
+width: 0.14
+moving:
+- cream_cheese_1
+- butter_1
+- chocolate_pudding_1
+- cookies_1

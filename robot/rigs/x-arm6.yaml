@@ -1,0 +1,138 @@
+# The xArm6 rig storm was fitted on (2026-09-16 .. 09-25): what was MEASURED on it, laid over
+# robot/robot.yaml. Another rig copies robot/rigs/TEMPLATE.yaml, measures, and sets STORM_RIG.
+rig: x-arm6
+
+robot:
+  # How far round from straight down a tilted take reaches before it counts as level, degrees.
+  # null: LIBERO's 80 (its drawer scenes) is used; measure with the side-take probe.
+  tilt_reach_deg: null
+  # What the bridge's tcp_pose already IS, and what this side adds to it.
+  #
+  # 2026-09-17: the control point is the tool point 172 mm along the flange +z -- out near
+  # the fingertips, ~30 mm past the G1's pad centre.  Confirmed twice with the operator.
+  #
+  # WHERE the 172 mm is applied moved once already.  The first bridge configured it on the
+  # arm and reported tcp_pose at the tool point; the rebuilt bridge reports the bare flange
+  # (tcp_offset_mm all zero).  Same control point, different side of the wire: this side
+  # now adds the 172 mm itself.  Whichever side holds it, the two must never BOTH hold it.
+  #
+  # The danger is not a configured offset, it is a CHANGED one: if the PC re-flashes a
+  # different tool, every motion silently moves its reference point and every descent aims
+  # short or deep by the difference.  So the host checks /health.tcp_offset_mm against
+  # expected_bridge_tcp_offset_mm before each run and refuses on a mismatch.
+  #
+  # (Worth knowing when a "down 20 mm, stop on contact" is meant to land the PADS on an
+  # object: it is the fingertip line that descends, ~30 mm ahead of the pads.)
+  grip_site_offset_m: 0.172
+  expected_bridge_tcp_offset_mm: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  gripper:
+    full_open_gap_m: 0.0889     # geometry estimate; re-measure with calipers (adapter/xarm6/README.md section 7)
+    # How long the pads are, up and down. Measure with calipers: with the tool offset it decides
+    # which objects are tall enough to grasp above the floor. null: not yet measured.
+    pad_length_m: null
+    # Where an EMPTY close stops, in the bridge's raw counts. With the bridge's close_raw at 0 the
+    # pads meet before the end of travel, so an empty close stops above 0 and, read against
+    # close_raw, would look like a held object. tools/calibrate_rig.py measures it; null uses the
+    # bridge's close_raw.
+    empty_close_raw: null
+
+defaults:
+  # A whole mission's wall clock on this arm. The simulator's 360 s assumes its motion; here a
+  # 49 mm chunk takes ~4.3 s, a lift and back ~28 s, and runs 5-7 spent 225/140/224 s of
+  # 367/300/365 moving -- run 6 ended 'replan refused for price: needed 67 s, 60 left'.
+  mission_budget_s: 900
+  # What a subgoal and the verdict ending it take on this arm, which prices a replan: the median
+  # subgoal (start to verdict) and verdict time of the robot's own recorded runs.
+  subgoal_median_s: 31.3     # 710 subgoals of the 126 recordings of 2026-09-24/25 (p25 21, p75 62)
+  subgoal_verdict_s: 1.5
+  contact:
+    joint_current_delta_a: 1.0
+    collision_sensitivity: 3
+    # Ignore contact for this long after a job starts, and baseline against a TRAILING
+    # MEDIAN of the moving current rather than a single sample.  All three numbers below are
+    # measured (2026-09-17, 12.5 mm/s descents, logs in adapter/xarm6/README.md section 5):
+    #   start-of-move transient   up to 0.74 A, over by t = 0.7 s   -> ignore_first_s 0.8
+    #   free-air cruise, vs a trailing 0.5 s median   <= 0.36 A     -> the false-positive floor
+    #   real table contact                            2.7 - 4.8 A   -> 1.0 A sits between them
+    # A FIXED baseline is not enough at any offset: over a 135 mm descent the elbow current
+    # drifts 0.99 A in free air, which is why the baseline has to follow the motion.
+    ignore_first_s: 0.8
+    # Does the bridge's contact detector actually work?  Set true once it baselines against
+    # a moving reference (adapter/xarm6/README.md punch list item 1).  While this is false the
+    # planner warns on any action that asks for stop_on_contact, because on 2026-09-17 every
+    # descent tripped ~1.2 mm in, on the acceleration ramp, in clear air.
+    trusted: false
+  # Added to each job's expected duration before the host gives up on it: two round trips
+  # over the tunnel plus the state lag plus a settling window.
+  completion_margin_s: 1.5
+
+
+workspace:
+  # How tall the things this robot works on get: the error bar of a height nothing measured.
+  # null: LIBERO's 160 mm is used.
+  max_object_height_mm: null
+  # Table top in the base frame, MEASURED 2026-09-17 by fitting a plane to each camera's
+  # depth inside the working box (x 0.25-0.75, |y| < 0.35) and evaluating it at (0.5, 0):
+  #   scene -69.7 mm (1.4 mm RMS)   wrist -62.1 mm (0.9 mm)   side -57.7 mm (1.6 mm)
+  # Three independent cameras, 12 mm spread, so treat this as +-6 mm.  The surface is not
+  # level: 1.3-2.1 deg of tilt, which is +-9 mm across the reachable half-metre, so a single
+  # scalar is an approximation -- do not plan a descent to land within a few mm of it.
+  # Superseded 2026-09-20 by the bridge's own commissioned number, /health.table.height_base_m
+  # = -0.062833786 m, which agrees with the host's three-camera fit above to within 0.2 mm.
+  table_z_mm: -62.8
+  table_z_uncertainty_mm: 6.0
+  # The lowest the tool point (the fingertip line) is ever sent, above table_z_mm: a hard floor
+  # under every move, whatever the cameras say. 2026-10-06: a wrist camera mounted the other way
+  # up read the table 190 mm too low, and a 'move down 350 mm' drove the fingertips into it
+  # (C31, twice). The table is known to +-6 mm, so 10 mm keeps the fingertips off it.
+  floor_above_table_mm: 10.0
+
+
+# What the bridge's /frames does not say about each camera. depth_min_range_m: the nearest the
+# depth stream returns anything (the clearance reading treats returns at it as a floor, not a
+# surface). 0.30 m is the figure the host assumed; the D455's datasheet gives ~0.25 m at 640 px,
+# NOT measured on this rig -- a value below the true one is unsafe (the floor would read as a
+# surface), so lower it only after tools/calibrate_rig.py measures it.
+cameras:
+  wrist:
+    depth_min_range_m: 0.30
+    # How far over that range returns still count as the range floor, as a share of it: run 3's
+    # first D455 returns sat at 0.306 m against 0.30 (2 %), and read as a surface they put the table
+    # at z = -135 mm. 0 for a camera whose depth is exact (the simulator's).
+    depth_floor_band_share: 0.05
+
+vision:
+  # Colour ranges for the live object readout.  HSV as OpenCV uses it: H 0-179, S/V 0-255.
+  # Lighting-dependent and scene-dependent by nature -- edit these, do not edit the code.
+  objects:
+    - name: blue cube
+      hsv_low: [85, 90, 60]
+      hsv_high: [110, 255, 255]
+      min_area_px: 60
+    # The corn is found by its GREEN HUSK, not the whole cob: its yellow kernels sit at
+    # hue 28, which is also the banana (26) and the tennis ball (35).  The husk's green in
+    # turn looks like the green cube's until you add the shape -- husk 20x48 px, cube 28x18
+    # -- hence min_aspect.  The position this yields is therefore the corn's GREEN END, not
+    # its centre; the cob runs roughly 60 mm from there toward the yellow.
+    - name: corn (green end)
+      hsv_low: [40, 90, 60]
+      hsv_high: [85, 255, 255]
+      min_area_px: 45
+      min_aspect: 1.9
+
+    # Red straddles the hue origin, so it needs both ends of the range, not one band.
+    # As of 2026-09-18 this finds nothing usable: the only red in view is on the plate in
+    # the side camera's foreground, 351 px at the very bottom edge. Left configured as the
+    # worked example of a two-band spec; retune it against whatever is actually on the table.
+    - name: red object
+      ranges:
+        - {hsv_low: [0, 110, 60], hsv_high: [10, 255, 255]}
+        - {hsv_low: [170, 110, 60], hsv_high: [179, 255, 255]}
+      min_area_px: 200
+
+
+bridge:
+  url: http://127.0.0.1:18765
+
+curobo:
+  device: cuda:0                # a GPU the VLM servers leave room on

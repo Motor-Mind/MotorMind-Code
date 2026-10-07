@@ -1,0 +1,23 @@
+__pycache__/
+*.pyc
+logs/
+MUJOCO_LOG.TXT
+
+# The vendored LIBERO asset tree is 617 MB of binaries (meshes, textures) and the
+# HDF5 demonstration datasets; both are copied in, not authored here, so they are
+# not committed. See README, "The simulator".
+sim/libero/assets
+sim/libero/datasets
+
+# The xArm6 bridge token is handed over out of band, from the robot PC; it never
+# belongs in the repo.
+bridge_token.txt
+
+# Run output never goes in git.
+evals/runs/
+sim/libero/.config
+dynamic_libero_tasks/videos/
+configs/servers.yaml
+
+# Installed by tools/setup_third_party.sh (LIBERO, cuRobo); never committed.
+third_party/

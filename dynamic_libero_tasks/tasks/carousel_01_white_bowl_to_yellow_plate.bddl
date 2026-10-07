@@ -1,0 +1,91 @@
+(define (problem LIBERO_Dynamic_Tabletop_Manipulation)
+  (:domain robosuite)
+  (:language pick up the white bowl from the rotating platform and place it on the yellow plate)
+    (:regions
+      (white_bowl_1_region
+          (:target main_table)
+          (:ranges (
+              (0.0498 0.1003 0.0698 0.1203)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (yellow_bowl_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1603 0.1298 -0.1403 0.1498)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (red_akita_black_bowl_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1898 -0.0803 -0.1698 -0.0603)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (akita_black_bowl_1_region
+          (:target main_table)
+          (:ranges (
+              (0.0203 -0.1098 0.0403 -0.0898)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (yellow_plate_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.3100 -0.3300 -0.2900 -0.3100)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+    )
+
+  (:fixtures
+    main_table - table
+  )
+
+  (:objects
+    white_bowl_1 - white_bowl
+    yellow_bowl_1 - yellow_bowl
+    red_akita_black_bowl_1 - red_akita_black_bowl
+    akita_black_bowl_1 - akita_black_bowl
+    yellow_plate_1 - yellow_plate
+  )
+
+  (:obj_of_interest
+    white_bowl_1
+    yellow_plate_1
+  )
+
+  (:init
+    (On white_bowl_1 main_table_white_bowl_1_region)
+    (On yellow_bowl_1 main_table_yellow_bowl_1_region)
+    (On red_akita_black_bowl_1 main_table_red_akita_black_bowl_1_region)
+    (On akita_black_bowl_1 main_table_akita_black_bowl_1_region)
+    (On yellow_plate_1 main_table_yellow_plate_1_region)
+  )
+
+  (:goal
+    (And (On white_bowl_1 yellow_plate_1))
+  )
+
+)

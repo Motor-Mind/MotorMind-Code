@@ -1,0 +1,91 @@
+(define (problem LIBERO_Dynamic_Tabletop_Manipulation)
+  (:domain robosuite)
+  (:language pick up the green butter from the conveyor belt and place it in the red basket)
+    (:regions
+      (butter_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1100 -0.3600 -0.0900 -0.3400)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (green_butter_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1100 -0.2100 -0.0900 -0.1900)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (cream_cheese_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1100 -0.0600 -0.0900 -0.0400)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (red_cream_cheese_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1100 0.0900 -0.0900 0.1100)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (red_basket_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.3100 -0.3300 -0.2900 -0.3100)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+    )
+
+  (:fixtures
+    main_table - table
+  )
+
+  (:objects
+    butter_1 - butter
+    green_butter_1 - green_butter
+    cream_cheese_1 - cream_cheese
+    red_cream_cheese_1 - red_cream_cheese
+    red_basket_1 - red_basket
+  )
+
+  (:obj_of_interest
+    green_butter_1
+    red_basket_1
+  )
+
+  (:init
+    (On butter_1 main_table_butter_1_region)
+    (On green_butter_1 main_table_green_butter_1_region)
+    (On cream_cheese_1 main_table_cream_cheese_1_region)
+    (On red_cream_cheese_1 main_table_red_cream_cheese_1_region)
+    (On red_basket_1 main_table_red_basket_1_region)
+  )
+
+  (:goal
+    (And (On green_butter_1 red_basket_1))
+  )
+
+)

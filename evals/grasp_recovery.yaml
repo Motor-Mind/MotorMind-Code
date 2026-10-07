@@ -1,0 +1,41 @@
+# Recovering from an empty pick-up. A chain that grasps first time never exercises the
+# recovery, so this one forces the miss: after the model's own approach, a manual `setup`
+# (unseen by the model) shifts the tool 70 mm forward -- 30 mm past the end of the 77 mm butter box
+# -- so the first close shuts on air. The grasp subgoal then has to notice, open, go up,
+# re-find the box against the marker, come back down over it and close. Scored on holding,
+# and then on the box actually rising.
+
+version: 1
+suite: libero_10
+task_id: 0
+sequential: true
+
+subgoals:
+  - name: approach
+    suite: libero_10
+    task_id: 0
+    subgoal: >
+      bring the gripper to just above the centre of the top of the butter box, low enough to
+      grasp it: come down as you go, and keep correcting sideways so you stay over its middle
+    criterion: >
+      In the wrist view the butter box -- the small box with the red and white BUTTER label --
+      sits between the jaws with its middle centred in the gap, and the clearance below the
+      tool is down to roughly 30 mm. Judge this from the jaws once you are close.
+    check: {fn: at_grasp_point, body: butter_1_main, part: top, within_mm: 25, above_mm: [-5, 50]}
+    max_cycles: 12
+    continue_on_fail: true
+
+  - name: grasp_after_miss
+    setup: [{type: move, direction: forward, distance_mm: 70}]
+    subgoal: close the gripper on the butter box so that it is held
+    criterion: The robot reports that it is holding something.
+    check: {fn: holding_object}
+    max_cycles: 12
+
+  - name: lift
+    subgoal: lift the butter box straight up by about 10 cm, keeping hold of it
+    criterion: >
+      The tool's z has increased by at least 80 mm from where this subgoal started and the
+      robot still reports holding something.
+    check: {fn: object_lifted, body: butter_1_main, at_least_mm: 60}
+    max_cycles: 4

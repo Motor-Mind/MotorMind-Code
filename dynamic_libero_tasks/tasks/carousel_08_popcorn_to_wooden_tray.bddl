@@ -1,0 +1,104 @@
+(define (problem LIBERO_Dynamic_Tabletop_Manipulation)
+  (:domain robosuite)
+  (:language pick up the popcorn from the rotating platform and place it in the wooden tray)
+    (:regions
+      (popcorn_1_region
+          (:target main_table)
+          (:ranges (
+              (0.0001 -0.1338 0.0201 -0.1138)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (macaroni_and_cheese_1_region
+          (:target main_table)
+          (:ranges (
+              (0.0884 0.0323 0.1084 0.0523)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (cookies_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.0422 0.1676 -0.0222 0.1876)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (yellow_cookies_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.2113 0.0851 -0.1913 0.1051)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (alphabet_soup_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1851 -0.1011 -0.1651 -0.0811)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (wooden_tray_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.3400 0.3500 -0.3200 0.3700)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+    )
+
+  (:fixtures
+    main_table - table
+  )
+
+  (:objects
+    popcorn_1 - popcorn
+    macaroni_and_cheese_1 - macaroni_and_cheese
+    cookies_1 - cookies
+    yellow_cookies_1 - yellow_cookies
+    alphabet_soup_1 - alphabet_soup
+    wooden_tray_1 - wooden_tray
+  )
+
+  (:obj_of_interest
+    popcorn_1
+    wooden_tray_1
+  )
+
+  (:init
+    (On popcorn_1 main_table_popcorn_1_region)
+    (On macaroni_and_cheese_1 main_table_macaroni_and_cheese_1_region)
+    (On cookies_1 main_table_cookies_1_region)
+    (On yellow_cookies_1 main_table_yellow_cookies_1_region)
+    (On alphabet_soup_1 main_table_alphabet_soup_1_region)
+    (On wooden_tray_1 main_table_wooden_tray_1_region)
+  )
+
+  (:goal
+    (And (On popcorn_1 wooden_tray_1))
+  )
+
+)

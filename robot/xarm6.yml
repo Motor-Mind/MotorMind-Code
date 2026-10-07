@@ -1,0 +1,301 @@
+# xArm6 + UFACTORY gripper for cuRobo, vendored into this project (originally generated
+# by storm/robots/curobo/build_configs.py from the link STLs).  Two edits here:
+#   * tool_frames is link6, the FLANGE -- the frame the bridge's tcp_pose refers to and
+#     the frame this project's jobs target, so IK needs no tool offset;
+#   * the `attached_object` placeholder link was removed (it is not in the URDF).
+# Collision geometry is these spheres; no STL files are needed.
+robot_cfg:
+  kinematics:
+    urdf_path: xarm6.urdf
+    asset_root_path: .
+    base_link: link_base
+    tool_frames: [link6]   # the FLANGE: the frame the bridge's tcp_pose refers to
+    collision_link_names: [link_base, link1, link2, link3, link4, link5, link6, xarm_gripper_base_link,
+      left_finger, right_finger]
+    mesh_link_names: []
+    collision_sphere_buffer: 0.005
+    collision_spheres:
+      link_base:
+      - center: [0.0, 0.0, 0.05]
+        radius: 0.0539
+      - center: [0.0, 0.0, 0.11]
+        radius: 0.05
+      - center: [-0.05, -0.01, 0.02]
+        radius: 0.0224
+      - center: [-0.05, 0.01, 0.03]
+        radius: 0.0224
+      - center: [-0.04, 0.02, 0.01]
+        radius: 0.02
+      - center: [0.0, -0.04, 0.01]
+        radius: 0.02
+      - center: [0.0, 0.04, 0.01]
+        radius: 0.02
+      - center: [-0.0192, -0.0403, 0.0069]
+        radius: 0.0539
+      - center: [0.0046, 0.041, 0.1228]
+        radius: 0.0539
+      - center: [0.0384, 0.0077, 0.0075]
+        radius: 0.0539
+      - center: [0.0339, -0.0149, 0.0888]
+        radius: 0.0539
+      - center: [0.022, -0.0279, 0.1393]
+        radius: 0.0539
+      - center: [-0.0503, 0.0261, 0.0157]
+        radius: 0.0539
+      - center: [-0.0413, -0.0065, 0.1224]
+        radius: 0.0539
+      link1:
+      - center: [0.0, -0.008, -0.008]
+        radius: 0.0543
+      - center: [-0.008, -0.008, -0.072]
+        radius: 0.0431
+      - center: [-0.016, 0.04, 0.016]
+        radius: 0.033
+      - center: [-0.008, 0.048, -0.016]
+        radius: 0.032
+      - center: [0.016, 0.048, 0.008]
+        radius: 0.032
+      - center: [0.016, 0.024, -0.096]
+        radius: 0.024
+      - center: [0.032, -0.008, -0.056]
+        radius: 0.024
+      - center: [-0.0017, -0.0305, 0.0309]
+        radius: 0.0543
+      - center: [-0.0107, -0.0383, -0.0762]
+        radius: 0.0543
+      - center: [0.0265, 0.0524, -0.0297]
+        radius: 0.0543
+      - center: [0.0171, 0.0443, 0.0368]
+        radius: 0.0543
+      - center: [0.036, -0.0063, -0.0897]
+        radius: 0.0543
+      - center: [-0.0252, 0.0243, -0.0966]
+        radius: 0.0543
+      - center: [-0.0386, 0.0532, -0.0052]
+        radius: 0.0543
+      link2:
+      - center: [0.0, -0.112, 0.024]
+        radius: 0.0537
+      - center: [0.0, -0.184, 0.0]
+        radius: 0.048
+      - center: [0.0, -0.104, 0.08]
+        radius: 0.046
+      - center: [0.048, -0.28, -0.008]
+        radius: 0.046
+      - center: [0.0, -0.232, -0.016]
+        radius: 0.0392
+      - center: [0.064, -0.296, 0.032]
+        radius: 0.033
+      - center: [-0.008, -0.032, 0.096]
+        radius: 0.032
+      - center: [0.0672, -0.3009, -0.0355]
+        radius: 0.0537
+      - center: [0.0023, 0.0062, 0.0925]
+        radius: 0.0537
+      - center: [-0.0, -0.1101, -0.0244]
+        radius: 0.0537
+      - center: [0.0009, -0.0946, 0.0879]
+        radius: 0.0537
+      - center: [0.0492, -0.2796, 0.0456]
+        radius: 0.0537
+      - center: [0.0018, -0.2183, 0.005]
+        radius: 0.0537
+      - center: [0.0122, -0.2728, -0.0472]
+        radius: 0.0537
+      link3:
+      - center: [0.08, 0.088, 0.008]
+        radius: 0.048
+      - center: [0.08, 0.08, 0.064]
+        radius: 0.0438
+      - center: [0.072, 0.136, -0.008]
+        radius: 0.04
+      - center: [-0.024, -0.008, 0.08]
+        radius: 0.024
+      - center: [-0.016, 0.016, 0.08]
+        radius: 0.024
+      - center: [0.0, -0.024, 0.08]
+        radius: 0.024
+      - center: [0.0, 0.0, 0.088]
+        radius: 0.024
+      - center: [0.0366, 0.0453, 0.0883]
+        radius: 0.048
+      - center: [0.1058, 0.1492, 0.0009]
+        radius: 0.048
+      - center: [0.0707, 0.0517, 0.0247]
+        radius: 0.048
+      - center: [0.0722, 0.0784, -0.0304]
+        radius: 0.048
+      - center: [0.0787, 0.1083, 0.0804]
+        radius: 0.048
+      - center: [0.0535, 0.1467, 0.0204]
+        radius: 0.048
+      - center: [0.0132, -0.0022, 0.0857]
+        radius: 0.048
+      link4:
+      - center: [0.0, 0.048, 0.0]
+        radius: 0.0431
+      - center: [-0.008, 0.008, -0.144]
+        radius: 0.033
+      - center: [0.016, -0.016, -0.152]
+        radius: 0.0288
+      - center: [0.0, 0.072, -0.056]
+        radius: 0.024
+      - center: [-0.016, -0.024, -0.16]
+        radius: 0.0226
+      - center: [-0.008, 0.032, -0.12]
+        radius: 0.0226
+      - center: [0.0, 0.064, -0.088]
+        radius: 0.0226
+      - center: [-0.0132, -0.0026, -0.1625]
+        radius: 0.0431
+      - center: [0.0002, 0.0146, 0.0018]
+        radius: 0.0431
+      - center: [0.0261, 0.0287, -0.1329]
+        radius: 0.0431
+      - center: [0.0287, 0.0674, -0.0649]
+        radius: 0.0431
+      - center: [-0.0261, 0.0435, -0.1132]
+        radius: 0.0431
+      - center: [-0.0286, 0.0698, -0.0561]
+        radius: 0.0431
+      - center: [0.0012, 0.0772, 0.0027]
+        radius: 0.0431
+      link5:
+      - center: [0.0, 0.0, 0.024]
+        radius: 0.04
+      - center: [0.064, 0.0, 0.008]
+        radius: 0.04
+      - center: [0.072, 0.04, 0.0]
+        radius: 0.04
+      - center: [0.088, -0.016, -0.024]
+        radius: 0.0179
+      - center: [0.088, 0.008, -0.024]
+        radius: 0.0179
+      - center: [0.032, -0.024, 0.016]
+        radius: 0.016
+      - center: [0.032, -0.024, 0.032]
+        radius: 0.016
+      - center: [0.1011, 0.0528, 0.0166]
+        radius: 0.04
+      - center: [0.0742, 0.0476, -0.0322]
+        radius: 0.04
+      - center: [0.045, 0.0379, 0.032]
+        radius: 0.04
+      - center: [0.01, -0.0308, 0.006]
+        radius: 0.04
+      - center: [-0.0068, 0.0278, 0.0003]
+        radius: 0.04
+      - center: [0.0958, -0.0128, -0.0029]
+        radius: 0.04
+      - center: [-0.0309, -0.0029, 0.0306]
+        radius: 0.04
+      link6:
+      - center: [-0.016, -0.008, -0.016]
+        radius: 0.024
+      - center: [-0.008, 0.016, -0.016]
+        radius: 0.024
+      - center: [0.008, -0.016, -0.016]
+        radius: 0.024
+      - center: [0.016, 0.008, -0.016]
+        radius: 0.024
+      - center: [0.0, -0.04, -0.016]
+        radius: 0.0139
+      - center: [-0.016, -0.032, -0.024]
+        radius: 0.012
+      - center: [-0.016, -0.032, -0.008]
+        radius: 0.012
+      - center: [0.0187, 0.0293, -0.0293]
+        radius: 0.024
+      - center: [0.0087, -0.0407, -0.01]
+        radius: 0.024
+      - center: [0.0356, -0.008, -0.0154]
+        radius: 0.024
+      - center: [0.0249, 0.0276, -0.0044]
+        radius: 0.0183
+      - center: [0.0013, 0.038, -0.0087]
+        radius: 0.0221
+      - center: [-0.035, 0.008, -0.0045]
+        radius: 0.024
+      - center: [-0.0337, 0.0109, -0.028]
+        radius: 0.024
+      xarm_gripper_base_link:
+      - center: [-0.024, -0.008, 0.04]
+        radius: 0.02
+      - center: [-0.024, -0.008, 0.064]
+        radius: 0.02
+      - center: [-0.024, -0.008, 0.088]
+        radius: 0.02
+      - center: [-0.024, 0.016, 0.088]
+        radius: 0.02
+      - center: [-0.016, -0.04, 0.048]
+        radius: 0.02
+      - center: [-0.016, -0.04, 0.072]
+        radius: 0.02
+      - center: [-0.016, 0.016, 0.048]
+        radius: 0.02
+      - center: [-0.016, 0.032, 0.064]
+        radius: 0.02
+      - center: [0.0167, 0.0347, 0.0509]
+        radius: 0.02
+      - center: [0.007, -0.0309, 0.0091]
+        radius: 0.02
+      - center: [-0.0115, 0.0369, 0.0175]
+        radius: 0.02
+      - center: [0.0084, 0.0273, 0.0888]
+        radius: 0.02
+      - center: [-0.0219, -0.0085, 0.0061]
+        radius: 0.02
+      - center: [0.0115, -0.029, 0.0859]
+        radius: 0.02
+      - center: [0.0158, -0.0336, 0.0406]
+        radius: 0.02
+      - center: [0.021, 0.014, 0.0092]
+        radius: 0.02
+      left_finger:
+      - center: [0.0, -0.015, 0.015]
+        radius: 0.0112
+      - center: [-0.005, -0.02, 0.025]
+        radius: 0.01
+      - center: [-0.005, -0.02, 0.035]
+        radius: 0.01
+      - center: [0.0, -0.0033, 0.003]
+        radius: 0.0112
+      - center: [-0.0006, -0.0192, 0.0505]
+        radius: 0.0112
+      - center: [0.0054, -0.0181, 0.0286]
+        radius: 0.0112
+      right_finger:
+      - center: [0.0, 0.01, 0.01]
+        radius: 0.0112
+      - center: [-0.005, 0.015, 0.02]
+        radius: 0.01
+      - center: [-0.005, 0.015, 0.03]
+        radius: 0.01
+      - center: [0.0006, 0.003, 0.0024]
+        radius: 0.0112
+      - center: [-0.0011, 0.0191, 0.0494]
+        radius: 0.0112
+      - center: [0.0046, 0.0205, 0.0272]
+        radius: 0.0112
+    self_collision_ignore:
+      link_base: [link1, link2]
+      link1: [link2, link3]
+      link2: [link3, link4]
+      link3: [link4, link5]
+      link4: [link5, link6]
+      link5: [left_finger, link6, right_finger, xarm_gripper_base_link]
+      link6: [left_finger, right_finger, xarm_gripper_base_link]
+      xarm_gripper_base_link: [left_finger, right_finger]
+      left_finger: [right_finger]
+    self_collision_buffer: {link_base: 0.02, link1: 0.0, link2: 0.0, link3: 0.0, link4: 0.0,
+      link5: 0.0, link6: 0.0, xarm_gripper_base_link: 0.0, left_finger: 0.005, right_finger: 0.005,
+      }
+    cspace:
+      joint_names: [joint1, joint2, joint3, joint4, joint5, joint6]
+      default_joint_position: [0.0, -0.04204, -1.165321, 0.0, 1.264071, 0.0]
+      cspace_distance_weight: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+      null_space_weight: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+      max_acceleration: 8.0
+      max_jerk: 300.0
+      position_limit_clip: 0.02
+    lock_joints: null

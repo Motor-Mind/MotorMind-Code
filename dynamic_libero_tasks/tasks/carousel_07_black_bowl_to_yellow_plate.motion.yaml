@@ -1,0 +1,11 @@
+type: circular
+center:
+- -0.06
+- 0.02
+omega: 0.25
+radius: 0.25
+moving:
+- akita_black_bowl_1
+- red_akita_black_bowl_1
+- white_bowl_1
+- yellow_bowl_1

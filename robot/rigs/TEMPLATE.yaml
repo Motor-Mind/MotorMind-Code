@@ -1,0 +1,77 @@
+# A rig profile: everything MEASURED on one xArm6 rig, laid over robot/robot.yaml key by key.
+# Copy to robot/rigs/<your-rig>.yaml, fill every REQUIRED value, and run with STORM_RIG=<your-rig>.
+# `python tools/calibrate_rig.py --rig <your-rig> [--gripper]` measures the values marked (auto)
+# through the bridge and prints where your profile differs. robot/rigs/x-arm6.yaml is a filled-in
+# example with the notes from its measurement.
+rig: my-rig
+
+robot:
+  # How far round from straight down a tilted take reaches before it counts as level, degrees.
+  # null: LIBERO's 80 (its drawer scenes) is used; measure with the side-take probe.
+  tilt_reach_deg: null
+  # REQUIRED. Where the control point is: metres along the flange +z to the tool point. Measure
+  # flange face -> fingertip line with calipers, fingers closed.
+  grip_site_offset_m: 0.172
+  # REQUIRED (auto). The TCP offset the bridge reports in /health; the host refuses to move when
+  # the arm's configured offset stops matching this (a re-flashed tool moves every motion).
+  expected_bridge_tcp_offset_mm: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  gripper:
+    # REQUIRED (auto with --gripper). Jaw gap fully open, metres.
+    full_open_gap_m: 0.0889
+    # Recommended. Pad length up and down, metres (calipers). null: not measured, and the prompts
+    # say so.
+    pad_length_m: null
+    # Recommended (auto with --gripper). The raw count an EMPTY close stops at; null uses the
+    # bridge's close_raw, which on some grippers reads an empty close as a held object.
+    empty_close_raw: null
+
+defaults:
+  # Seconds one mission may take on this arm (the simulator's 360 assumes its faster motion).
+  mission_budget_s: 900
+  # What a subgoal and the verdict ending it take on this arm, which prices a replan: the median
+  # subgoal (start to verdict) and verdict time of the robot's own recorded runs.
+  subgoal_median_s: null     # measure: the median subgoal time of missions run on the rig, or LIBERO's 21 is used
+  subgoal_verdict_s: null     # LIBERO's 4.6 is used
+  contact:
+    # REQUIRED before contact stops are trusted: log joint currents on free-air descents and on
+    # table contact at the default speed; the threshold goes between the two.
+    joint_current_delta_a: 1.0
+    collision_sensitivity: 3
+    ignore_first_s: 0.8
+    # false until the bridge's contact detector has been checked on this rig: the planner then
+    # warns on every stop_on_contact.
+    trusted: false
+  # Seconds added to each job's expected duration: two round trips to the bridge plus settling.
+  completion_margin_s: 1.5
+
+workspace:
+  # How tall the things this robot works on get: the error bar of a height nothing measured.
+  # null: LIBERO's 160 mm is used.
+  max_object_height_mm: null
+  # REQUIRED (auto, when the bridge publishes /health table.height_base_m). The table top in the
+  # base frame, mm; otherwise fit a plane to the wrist camera's depth over the table.
+  table_z_mm: -62.8
+  table_z_uncertainty_mm: 6.0
+
+cameras:
+  wrist:
+    # REQUIRED. The nearest the wrist depth stream returns anything, metres. Step the tool down
+    # onto a flat card and note where depth stops; err HIGH (a value below the true one reads the
+    # range floor as a surface).
+    depth_min_range_m: 0.30
+    # How far over that range returns still count as the range floor, as a share of it: run 3's
+    # first D455 returns sat at 0.306 m against 0.30 (2 %), and read as a surface they put the table
+    # at z = -135 mm. 0 for a camera whose depth is exact (the simulator's).
+    depth_floor_band_share: 0.05
+
+vision:
+  # Optional: HSV ranges for the page's live object readout (OpenCV H 0-179). Scene-dependent.
+  objects: []
+
+bridge:
+  # REQUIRED. Where the bridge answers from the GPU host (often an ssh -R tunnel).
+  url: http://127.0.0.1:18765
+
+curobo:
+  # Only with curobo.enabled: a GPU the VLM servers leave room on.
+  device: cuda:0

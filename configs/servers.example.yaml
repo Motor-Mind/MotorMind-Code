@@ -1,0 +1,11 @@
+# Which OpenAI-compatible VLM server each role talks to. Copy to configs/servers.yaml (ignored by
+# git) or point STORM_SERVERS at your own file. QWEN_<ROLE>_URL still wins over this file.
+# A list is replicas of one role (the least busy is asked first).
+#
+# The layout the published sweeps ran on: Qwen3.8-Flash-Next-FP8 under SGLang, one TP=2 server per
+# pair of GPUs, 32k context (see tools/serve_qwen.sh).
+roles:
+  planner:  http://127.0.0.1:8081/v1     # plan + verify
+  executor: http://127.0.0.1:8083/v1     # the propose/supervise loop (a sweep line gets its own)
+  monitor:  http://127.0.0.1:8084/v1     # scene monitor; sharing the planner's server cost 7/80 cells
+  memory:   http://127.0.0.1:8084/v1     # memory note writer

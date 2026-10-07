@@ -1,0 +1,79 @@
+# Subgoals for the online simulator test, sized so the executor can finish each one by
+# proposing a few short motions in a row.
+#
+# Every entry has two descriptions of success and they do different jobs:
+#
+#   criterion  -- words, handed to the model, so it has something to decide "done" against.
+#                 Without one it never declares done: a tool that has not arrived looks the
+#                 same as one that has, and it just keeps proposing.
+#   check      -- a machine test read from the simulator, which decides whether the run
+#                 PASSED. The model's own "done" is recorded but never trusted: the point of
+#                 the exercise is to find out when it is wrong.
+#
+# `check` names a function in evals/checks.py and its arguments. Positions come straight from
+# MuJoCo, so they are ground truth rather than another estimate.
+
+version: 1
+suite: libero_10
+task_id: 0          # "put both the alphabet soup and the tomato sauce in the basket"
+
+subgoals:
+  - name: lift
+    subgoal: raise the gripper straight up by about 10 cm, keeping everything else still
+    criterion: >
+      The tool's z has increased by at least 80 mm from where this subgoal started. The robot
+      reports its tool position every time you are asked.
+    check: {fn: moved_axis, axis: z, at_least_mm: 80}
+    max_cycles: 4
+
+  # The Panda starts with its jaws 42 mm apart out of 79 -- already "open" by any loose
+  # reading, which is why the first version of this passed without the robot doing anything.
+  # Fully open is a state it has to actually command.
+  - name: open_jaws
+    subgoal: open the gripper fully
+    criterion: >
+      The robot reports the jaws as FULLY OPEN. Partly open is not enough: it starts partly
+      open, so the subgoal is only met once they are at the end of their travel.
+    check: {fn: gripper_open, at_least_mm: 70}
+    max_cycles: 3
+
+  - name: close_jaws
+    subgoal: close the gripper
+    criterion: >
+      The robot reports the jaws as CLOSED. Note that "nothing is held" is a different fact
+      and does not mean the jaws are open.
+    check: {fn: gripper_closed, at_most_mm: 10}
+    max_cycles: 2
+
+  - name: over_basket
+    subgoal: >
+      move the gripper horizontally until it is directly above the wicker basket, without
+      changing its height
+    criterion: >
+      Looking down from the wrist camera, the basket is centred under the gripper; in the
+      scene view the gripper is above the basket rather than to one side of it.
+    check: {fn: above_object, body: basket_1_main, within_mm: 70}
+    max_cycles: 9          # the basket is 259 mm away and a step is at most 50 mm
+
+  # Was "above the tomato sauce", and it tested nothing useful. Two faults, both mine: the
+  # can starts 43 mm from the tool, already inside its own 60 mm tolerance, so the subgoal
+  # was satisfied before the first cycle; and it is one of several similar red-labelled cans,
+  # so a miss is an identification failure with nothing to say about the executor. The milk
+  # carton is 145 mm away and the only one with a readable white-and-blue label at 256 px.
+  - name: over_milk
+    subgoal: >
+      move the gripper horizontally until it is directly above the milk carton, without
+      changing its height
+    criterion: >
+      The milk carton -- the tall white box with the blue label -- is centred under the
+      gripper in the wrist view.
+    check: {fn: above_object, body: milk_1_main, within_mm: 60}
+    max_cycles: 8
+
+  - name: descend_to_hover
+    subgoal: >
+      lower the gripper until it is roughly 12 cm above the table surface, and stop there
+    criterion: >
+      The tool's z is about 0.54 m in the robot's frame. The table top is at about 0.42 m.
+    check: {fn: height_between, low_m: 0.50, high_m: 0.60}
+    max_cycles: 5

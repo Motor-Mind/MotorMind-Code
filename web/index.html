@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>storm_0918</title>
+<style>
+  :root {
+    --bg: #14161a; --panel: #1c1f25; --sunk: #171a20; --line: #2b3038;
+    --text: #e6e9ee; --dim: #949cab; --accent: #6fb3ff;
+    --ok: #5ad18c; --warn: #e8c46a; --bad: #f0685f; --obj: #c48cff;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.5 system-ui, sans-serif; }
+
+  /* ---------------------------------------------------------------- header */
+  header { display: flex; align-items: center; gap: 14px; padding: 10px 16px;
+           border-bottom: 1px solid var(--line); position: sticky; top: 0;
+           background: var(--bg); z-index: 5; flex-wrap: wrap; }
+  header h1 { font-size: 15px; margin: 0; font-weight: 600; }
+  select { background: var(--sunk); color: var(--text); border: 1px solid var(--line);
+           border-radius: 5px; padding: 5px 8px; font: 13px var(--mono); }
+  select:disabled { opacity: .5; }
+  #caps { color: var(--dim); font: 11.5px var(--mono); }
+  #stop { margin-left: auto; background: var(--bad); color: #fff; border: 0; border-radius: 6px;
+          padding: 9px 22px; font-weight: 700; letter-spacing: .04em; cursor: pointer; }
+  #stop:active { transform: translateY(1px); }
+  #reset { background: #262b33; color: var(--text); border: 1px solid var(--line);
+           border-radius: 6px; padding: 8px 14px; font-size: 12px; cursor: pointer; }
+  #reset:hover { border-color: var(--accent); }
+  #reset:disabled { opacity: .5; cursor: default; }
+  #task { max-width: 340px; text-overflow: ellipsis; }
+
+  /* ---------------------------------------------------------------- layout */
+  main { display: grid; gap: 14px; padding: 14px;
+         grid-template-columns: minmax(330px, 1fr) minmax(360px, 1.05fr) minmax(300px, .95fr); }
+  main > .full { grid-column: 1 / -1; }
+  @media (max-width: 1150px) { main { grid-template-columns: 1fr; } }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+            padding: 12px; align-self: start; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--dim);
+       margin: 0 0 10px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+  h2 .n { background: var(--sunk); border: 1px solid var(--line); border-radius: 4px;
+          padding: 1px 7px; color: var(--accent); letter-spacing: 0; }
+  h2 .right { margin-left: auto; font: 11.5px var(--mono); color: var(--dim);
+              text-transform: none; letter-spacing: 0; font-weight: 400; }
+  label.check { color: var(--dim); font-size: 12px; display: inline-flex; align-items: center;
+                gap: 5px; cursor: pointer; text-transform: none; letter-spacing: 0; }
+
+  /* ---------------------------------------------------------------- cameras */
+  /* Capped rather than stretched: with 1fr tracks two cameras filled the whole page width and
+     the pictures were bigger than anything on screen needed them to be. */
+  .cams { display: grid; gap: 10px; justify-content: start;
+          grid-template-columns: repeat(auto-fit, minmax(150px, var(--cam, 230px))); }
+  .cams figure { margin: 0; }
+  .cams img { width: 100%; border-radius: 6px; border: 1px solid var(--line);
+              background: #0f1115; display: block; aspect-ratio: 1; object-fit: contain; }
+  .cams figcaption { color: var(--dim); font: 10.5px var(--mono); margin-top: 4px;
+                     display: flex; gap: 8px; align-items: baseline; }
+  .cams figcaption b { color: var(--text); font-size: 11.5px; }
+  .stale { color: var(--warn); }
+
+  /* ---------------------------------------------------------------- command */
+  textarea { width: 100%; height: 260px; background: #0f1115; color: var(--text);
+             border: 1px solid var(--line); border-radius: 6px; padding: 10px;
+             font: 12.5px/1.6 var(--mono); resize: vertical; }
+  button.small { background: #262b33; color: var(--text); border: 1px solid var(--line);
+                 border-radius: 5px; padding: 4px 9px; font-size: 12px; cursor: pointer;
+                 margin: 0 5px 5px 0; }
+  button.small:hover { border-color: var(--accent); }
+  #run-subgoal, #execute { width: 100%; margin-top: 10px; padding: 11px; border-radius: 6px;
+                           border: 0; font-weight: 600; font-size: 14px; cursor: pointer;
+                           background: var(--accent); color: #0b0e12; }
+  #run-subgoal[disabled], #execute[disabled] { background: #333a44; color: var(--dim);
+                                               cursor: not-allowed; }
+  .cycle { border: 1px solid var(--line); border-radius: 6px; padding: 9px 10px;
+           margin-bottom: 10px; background: var(--sunk); }
+  .cycle .ctitle { font: 600 12px var(--mono); color: var(--accent); margin-bottom: 4px; }
+  .cycle .said { font: 12px/1.5 var(--mono); color: var(--text); margin: 2px 0; }
+  .cycle .meta { font: 11px var(--mono); color: var(--dim); }
+  .cycle pre { font: 11px/1.45 var(--mono); background: #0f1115; border: 1px solid var(--line);
+               border-radius: 4px; padding: 6px 8px; margin: 5px 0; overflow-x: auto;
+               color: var(--text); }
+  .sup { border-left: 2px solid var(--obj); padding: 3px 0 3px 8px; margin: 4px 0;
+         font: 11.5px var(--mono); }
+  .hint { color: var(--dim); font-size: 12px; margin-top: 8px; }
+  .err { color: var(--bad); font: 12.5px/1.6 var(--mono); white-space: pre-wrap; margin-top: 8px; }
+
+  /* ---------------------------------------------------------------- plan */
+  .chain { font: 12px var(--mono); }
+  .step { border-left: 2px solid var(--accent); padding: 6px 0 6px 10px; margin-bottom: 12px; }
+  .kv { color: var(--dim); }
+  table { width: 100%; border-collapse: collapse; font: 11.5px var(--mono); margin-top: 6px; }
+  th, td { text-align: left; padding: 3px 6px; border-bottom: 1px solid var(--line);
+           white-space: nowrap; }
+  th { color: var(--dim); font-weight: 500; }
+  .note { color: var(--warn); font-size: 11.5px; margin-top: 4px; }
+  .warn-box { background: #2a2418; border: 1px solid #47391d; color: var(--warn);
+              border-radius: 6px; padding: 8px 10px; font-size: 12.5px; margin-bottom: 10px; }
+
+  /* ---------------------------------------------------------------- robot */
+  dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 0;
+       font: 12px var(--mono); }
+  dt { color: var(--dim); } dd { margin: 0; }
+  .surface { margin-top: 10px; padding: 9px 10px; border: 1px solid var(--line);
+             border-radius: 6px; background: var(--sunk); }
+  .surface .big { font: 600 22px/1.15 var(--mono); color: var(--accent); }
+  .surface .big small { font: 400 12px var(--mono); color: var(--dim); margin-left: 3px; }
+  .surface .row { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 4px;
+                  font: 11.5px var(--mono); color: var(--dim); }
+  .surface .row b { color: var(--text); }
+  .gripper { margin-top: 10px; padding: 9px 10px; border: 1px solid var(--line);
+             border-radius: 6px; background: var(--sunk); }
+  .gripper .ghead { display: flex; align-items: center; gap: 8px; font: 11px system-ui;
+                    text-transform: uppercase; letter-spacing: .07em; color: var(--dim); }
+  .gripper .ghead .right { margin-left: auto; }
+  .jaws { position: relative; height: 30px; margin: 8px 0 3px; border-radius: 4px;
+          background: #0f1115; border: 1px solid var(--line); overflow: hidden; }
+  .jaws .jaw { position: absolute; top: 4px; bottom: 4px; width: 20%; border-radius: 3px;
+               background: #4a5260;
+               border: 1px solid #626c7c; transition: left .18s ease, right .18s ease; }
+  .jaws.moving .jaw { border-color: var(--warn); }
+  .jaws .held { position: absolute; top: 9px; bottom: 9px; border-radius: 2px;
+                background: var(--ok); opacity: .85; transition: left .18s, right .18s; }
+  .jaws .centre { position: absolute; top: 0; bottom: 0; left: 50%; width: 1px;
+                  background: var(--line); }
+  .gripper .scale { display: flex; justify-content: space-between; font: 10.5px var(--mono);
+                    color: var(--dim); }
+  .gripper .row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 5px;
+                  font: 11.5px var(--mono); color: var(--dim); }
+  .gripper .row b { color: var(--text); }
+  .gripper .why { color: var(--dim); font: 11px/1.5 var(--mono); margin-top: 4px; }
+  #log { font: 11.5px/1.6 var(--mono); max-height: 240px; overflow: auto; margin-top: 8px; }
+  #log div { border-bottom: 1px solid var(--line); padding: 2px 0; }
+
+  /* ---------------------------------------------------------------- schema */
+  .schema { font: 11.5px/1.65 var(--mono); }
+  .schema h3 { font: 600 11px system-ui; text-transform: uppercase; letter-spacing: .07em;
+               color: var(--dim); margin: 12px 0 4px; }
+  .schema code { color: var(--accent); }
+  .schema .muted { color: var(--dim); }
+  .schema table td { vertical-align: top; white-space: normal; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 3px 0 2px; }
+  .chip { background: #232830; border: 1px solid var(--line); border-radius: 4px;
+          padding: 2px 7px; font: 11.5px var(--mono); color: var(--text); cursor: pointer; }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip.rot { color: #d8b6ff; } .chip.rot:hover { border-color: var(--obj); color: var(--obj); }
+  .enum { display: flex; flex-wrap: wrap; gap: 5px; margin: 2px 0 8px; }
+  .enum span { font: 11.5px var(--mono); background: #232830; border: 1px solid var(--line);
+               border-radius: 4px; padding: 1px 6px; }
+
+  nav.tabs { display: flex; gap: 2px; padding: 0 14px; background: var(--bg);
+             border-bottom: 1px solid var(--line); }
+  nav.tabs button { background: none; border: none; border-bottom: 2px solid transparent;
+                    color: var(--dim); font: inherit; letter-spacing: .04em;
+                    text-transform: uppercase; padding: 10px 14px; cursor: pointer; }
+  nav.tabs button:hover { color: var(--text); }
+  nav.tabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
+
+  /* The mission tab, laid out in the order things happen: the pictures and the task box at
+     the top, then the planner's subgoals beside the executor's motions and what the memory
+     made of them, and the robot under all three. */
+  #view-mission { grid-template-columns:
+                    minmax(300px, 1fr) minmax(320px, 1.05fr) minmax(300px, .95fr); }
+  #view-mission #mission-camera-panel { grid-column: 1 / 3; grid-row: 1; }
+  #view-mission #mission-task-panel { grid-column: 3; grid-row: 1; }
+  #view-mission #mission-planner-panel { grid-column: 1; grid-row: 2; }
+  #view-mission #mission-executor-panel { grid-column: 2; grid-row: 2; }
+  #view-mission #mission-memory-panel { grid-column: 3; grid-row: 2; }
+  #view-mission #mission-timing-panel { grid-column: 1 / -1; grid-row: 3; }
+  #view-mission #mission-robot-panel { grid-column: 1 / -1; grid-row: 4; }
+  @media (max-width: 1150px) {
+    #view-mission { grid-template-columns: 1fr; }
+    #view-mission > section { grid-column: 1 !important; grid-row: auto !important; }
+  }
+
+  /* One planned subgoal: its state, what the executor was told, and what it was judged on. */
+  .sg { border-left: 2px solid var(--line); padding: 6px 0 6px 10px; margin-bottom: 10px; }
+  .sg.on { border-left-color: var(--accent); }
+  .sg.away { opacity: .5; }
+  .sg.away .sgname { text-decoration: line-through; }
+  .sg .sgname { color: var(--text); font-weight: 600; }
+  .sg .crit { color: var(--dim); font: 11px var(--mono); margin-top: 2px; }
+  /* How long each part of the mission is taking: one row per part, the model's own
+     seconds rather than the page's guess at them. */
+  .timing { width: 100%; border-collapse: collapse; font: 11px/1.6 var(--mono); }
+  .timing th { color: var(--dim); font-weight: 500; text-align: right; padding: 2px 8px;
+               border-bottom: 1px solid var(--line); }
+  .timing th:first-child { text-align: left; }
+  .timing td { padding: 2px 8px; text-align: right; border-bottom: 1px solid var(--sunk); }
+  .timing td:first-child { text-align: left; color: var(--text); }
+  .timing td.mean { color: var(--text); }
+  .timing tr.none td { color: var(--dim); }
+  .timing tr.wall td { border-bottom: 0; padding-top: 6px; }
+  .mnote ul { margin: 2px 0 8px; padding-left: 18px; }
+  .mnote li { margin: 2px 0; }
+  .mlog { font: 11px/1.5 var(--mono); color: var(--dim); max-height: 300px; overflow: auto;
+          margin-top: 10px; border-top: 1px solid var(--line); padding-top: 8px; }
+  .mlog div { padding: 1px 0; white-space: pre-wrap; border-bottom: 1px solid var(--sunk); }
+  .robot-row { display: grid; gap: 14px; align-items: start;
+               grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+  .robot-row .gripper, .robot-row .surface { margin-top: 0; }
+  #mission-run, #mission-stop-btn { flex: 1; padding: 11px; border-radius: 6px; border: 0;
+                                    font-weight: 600; font-size: 14px; cursor: pointer; }
+  #mission-run { background: var(--accent); color: #0b0e12; }
+  #mission-run[disabled] { background: #333a44; color: var(--dim); cursor: not-allowed; }
+  #mission-stop-btn { background: #262b33; color: var(--text); border: 1px solid var(--line); }
+  #mission-stop-btn[disabled] { opacity: .5; cursor: default; }
+
+  /* The question that produced each answer, folded away until it is wanted. */
+  details.ask { margin: 4px 0 2px; }
+  details.ask > summary { cursor: pointer; color: var(--dim); font: 11px var(--mono);
+                          list-style: none; user-select: none; }
+  details.ask > summary::before { content: "▸ "; }
+  details.ask[open] > summary::before { content: "▾ "; }
+  details.ask > summary:hover { color: var(--accent); }
+  details.ask pre { white-space: pre-wrap; max-height: 320px; overflow: auto;
+                    font: 10.5px/1.5 var(--mono); background: #0f1115; color: var(--dim);
+                    border: 1px solid var(--line); border-radius: 5px; padding: 8px;
+                    margin: 5px 0 0; }
+
+  .badge { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 11px;
+           font-weight: 600; }
+  .b-ok { background: #16311f; color: var(--ok); } .b-bad { background: #331a19; color: var(--bad); }
+  .b-warn { background: #322a17; color: var(--warn); } .b-dim { background: #232830; color: var(--dim); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>storm_0918</h1>
+  <label class="check">backend
+    <select id="backend"></select>
+  </label>
+  <label class="check">mode
+    <select id="mode">
+      <option value="manual">manual — type a command</option>
+      <option value="subgoal">subgoal — the model proposes</option>
+    </select>
+  </label>
+  <label class="check" id="task-pick" style="display:none"
+         title="Rebuilds the simulator for another task. Refused while anything is running.">task
+    <select id="task"></select>
+  </label>
+  <span id="caps">connecting…</span>
+  <span id="readiness" class="badge b-warn" style="display:none" title=""></span>
+  <button id="reset" style="display:none"
+          title="One home action through the runner: env.reset() in LIBERO, the home job on the arm. Refused while anything is running.">reset scene</button>
+  <button id="stop" title="Always available. Goes straight to the adapter's stop().">STOP</button>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button id="tab-console" role="tab" aria-selected="true">console</button>
+  <button id="tab-mission" role="tab" aria-selected="false">mission</button>
+</nav>
+
+<main id="view-console">
+  <section class="full" id="camera-section">
+    <h2><span class="n">cameras</span>
+      <span id="camera-toggles"></span>
+      <label class="check" title="How big the camera pictures are drawn">size
+        <input type="range" id="cam-size" min="120" max="460" step="10" value="230"
+               style="width:90px;vertical-align:middle">
+      </label>
+      <span class="right" id="cam-stats">—</span>
+    </h2>
+    <div class="cams" id="cams"><span class="kv">waiting for the first frames…</span></div>
+  </section>
+
+  <section id="sec-subgoal" style="display:none">
+    <h2><span class="n">1</span> Subgoal <span class="right" id="model-status"></span></h2>
+    <textarea id="subgoal" spellcheck="false" style="height:90px"
+      placeholder="move above the blue cube, align with its edge, and prepare to grasp"></textarea>
+    <div id="subgoal-error" class="err"></div>
+    <label class="check" style="margin-top:8px">motions
+      <input type="number" id="cycles" value="4" min="1" max="20"
+             style="width:64px;background:var(--sunk);color:var(--text);border:1px solid var(--line);border-radius:4px;padding:3px 5px">
+    </label>
+    <button id="run-subgoal">Run subgoal</button>
+    <p class="hint">The model proposes one short motion at a time, the controller turns it into
+      steps this robot accepts, and the motion is watched while it runs. STOP cancels both.</p>
+  </section>
+
+  <section id="sec-executor" style="display:none">
+    <h2><span class="n">2</span> Executor <span class="right" id="exec-status"></span></h2>
+    <div id="exec-timing" class="kv">—</div>
+    <div id="executor" class="chain"><span class="kv">no subgoal yet</span></div>
+  </section>
+
+  <section id="sec-command">
+    <h2><span class="n">1</span> Command</h2>
+    <div id="examples"></div>
+    <textarea id="editor" spellcheck="false"></textarea>
+    <div id="parse-error" class="err"></div>
+    <button id="execute" disabled>Preview first</button>
+    <p class="hint">Editing re-plans automatically and moves nothing. Running is this button,
+      and it asks once before the robot moves.</p>
+  </section>
+
+  <section id="sec-plan">
+    <h2><span class="n">2</span> Plan <span class="right" id="plan-summary"></span></h2>
+    <div id="plan" class="chain"><span class="kv">waiting for a command…</span></div>
+  </section>
+
+  <section>
+    <h2><span class="n">3</span> Robot <span class="right" id="run-status"></span></h2>
+    <dl id="state"><dt>state</dt><dd>—</dd></dl>
+    <div class="gripper" id="gripper" style="display:none">
+      <div class="ghead"><span>gripper</span><span class="right" id="grip-badge"></span></div>
+      <div class="jaws" id="jaws">
+        <div class="centre"></div>
+        <div class="held" id="grip-held" style="display:none"></div>
+        <div class="jaw" id="jaw-left"></div>
+        <div class="jaw" id="jaw-right"></div>
+      </div>
+      <div class="scale"><span>closed</span><span>open</span></div>
+      <div class="row" id="grip-detail"></div>
+      <div class="why" id="grip-why"></div>
+    </div>
+    <div class="surface" id="surface" style="display:none">
+      <div class="big" id="surface-clearance">—</div>
+      <div class="row" id="surface-detail"></div>
+    </div>
+    <div id="log"></div>
+  </section>
+
+  <section class="full">
+    <h2><span class="n">ref</span> Action schema</h2>
+    <div id="schema" class="schema"></div>
+  </section>
+</main>
+
+<!-- The second view: one mission, top to bottom in the order it happens, drawn by the
+     console's own renderers (see el() in the script). -->
+<main id="view-mission" style="display:none">
+  <section id="mission-camera-panel">
+    <h2><span class="n">cameras</span>
+      <span id="mission-camera-toggles"></span>
+      <span class="right" id="mission-cam-stats">—</span>
+    </h2>
+    <div class="cams" id="mission-cams"><span class="kv">waiting for the first frames…</span></div>
+  </section>
+
+  <section id="mission-task-panel">
+    <h2><span class="n">1</span> Task <span class="right" id="mission-models"></span></h2>
+    <textarea id="mission-task" spellcheck="false" style="height:70px"
+      placeholder="the whole task, in one sentence"></textarea>
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:8px 0">
+      <label class="check" title="Motions per subgoal. The planner is told this number and
+                                  every subgoal it writes is clamped to it.">budget
+        <input type="number" id="mission-budget" value="10" min="1" max="20"
+               style="width:60px;background:var(--sunk);color:var(--text);border:1px solid var(--line);border-radius:4px;padding:3px 5px">
+      </label>
+      <label class="check" title="A second pair of eyes on the scene while a subgoal runs. It
+                                  never moves anything; a STOP alert cancels the motion.">
+        <input type="checkbox" id="mission-monitor" checked> monitor</label>
+    </div>
+    <div id="mission-error" class="err"></div>
+    <div style="display:flex;gap:8px">
+      <button id="mission-run">Run mission</button>
+      <button id="mission-stop-btn" disabled
+              title="Cancels the mission and stops the robot. A model call already in flight
+                     has to come back first, so it can take a few seconds.">Stop</button>
+    </div>
+    <div id="mission-status" class="hint"><span class="kv">nothing has been run yet</span></div>
+    <p class="hint">The planner writes the subgoals and judges each one, the executor drives
+      them one motion at a time, and the memory summarises what happened for the next plan.
+      STOP in the header cancels a mission too.</p>
+  </section>
+
+  <section id="mission-planner-panel">
+    <h2><span class="n">2</span> Planner <span class="right" id="mission-plan-summary"></span></h2>
+    <div id="mission-plan" class="chain"><span class="kv">no plan yet</span></div>
+  </section>
+
+  <section id="mission-executor-panel">
+    <h2><span class="n">3</span> Executor <span class="right" id="mission-exec-status"></span></h2>
+    <div id="mission-executor" class="chain"><span class="kv">no subgoal yet</span></div>
+  </section>
+
+  <section id="mission-memory-panel">
+    <h2><span class="n">4</span> Context manager <span class="right" id="mission-note-version"></span></h2>
+    <div id="mission-note" class="chain"><span class="kv">nothing summarised yet</span></div>
+    <div id="mission-log" class="mlog"></div>
+  </section>
+
+  <section id="mission-timing-panel">
+    <h2><span class="n">5</span> Timing <span class="right" id="mission-wall"></span></h2>
+    <div id="mission-timing"><span class="kv">nothing has been timed yet</span></div>
+    <p class="hint">Averaged over the mission so far. The model calls report their own
+      seconds; a motion cycle is measured from one proposal to whatever came next, so it
+      holds the supervision and the waiting as well as the motion.</p>
+  </section>
+
+  <section id="mission-robot-panel">
+    <h2><span class="n">6</span> Robot <span class="right" id="mission-run-status"></span></h2>
+    <div class="robot-row">
+      <dl id="mission-state"><dt>state</dt><dd>—</dd></dl>
+      <div class="gripper" id="mission-gripper" style="display:none">
+        <div class="ghead"><span>gripper</span><span class="right" id="mission-grip-badge"></span></div>
+        <div class="jaws" id="mission-jaws">
+          <div class="centre"></div>
+          <div class="held" id="mission-grip-held" style="display:none"></div>
+          <div class="jaw" id="mission-jaw-left"></div>
+          <div class="jaw" id="mission-jaw-right"></div>
+        </div>
+        <div class="scale"><span>closed</span><span>open</span></div>
+        <div class="row" id="mission-grip-detail"></div>
+        <div class="why" id="mission-grip-why"></div>
+      </div>
+      <div class="surface" id="mission-surface" style="display:none">
+        <div class="big" id="mission-surface-clearance">—</div>
+        <div class="row" id="mission-surface-detail"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const fmt = (v, n = 1) => (v === null || v === undefined) ? "—" : Number(v).toFixed(n);
+const vec = (a, n = 1) => a ? "[" + a.map((v) => fmt(v, n)).join(", ") + "]" : "—";
+
+let CONFIG = null, PLAN = null, RUNNING = false, SWITCHING = false, RESETTING = false;
+let VIEW = "console";                   // which tab is on screen
+let MISSION_RUNNING = false;            // kept up to date by pollState, from either tab
+const esc = (s) => String(s === null || s === undefined ? "" : s)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+// Both views hold the same logical panels, so the renderers below are written once and drawn
+// into whichever tab is showing. Only one fetch of each thing happens per tick either way --
+// duplicating the polling would double the render load on LIBERO's single env thread, which is
+// exactly the wrong moment to do that, since it is busy while the executor is running.
+function el(name) {
+  if (VIEW !== "console") { const node = $(VIEW + "-" + name); if (node) return node; }
+  return $(name);
+}
+let CAMERAS_ON = {};                    // camera name -> shown, remembered per backend
+
+async function api(path, body) {
+  const options = body === undefined ? {}
+    : { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body) };
+  // A transport failure resolves to an error answer rather than throwing, so no handler is
+  // left mid-await with its busy flag (SWITCHING, ...) set.
+  try {
+    return await (await fetch(path, options)).json();
+  } catch (exc) {
+    return { ok: false, error: "no answer from the server (" + exc + ")" };
+  }
+}
+
+// ---------------------------------------------------------------- boot
+
+async function boot() {
+  CONFIG = await api("/api/config");
+  if (!CONFIG.backend) { $("caps").textContent = CONFIG.error || "no backend"; return; }
+
+  const c = CONFIG.capabilities;
+  $("caps").textContent = c.max_translation_mm + " mm / " + c.max_rotation_deg
+    + "° per step · tool " + c.control_point_offset_mm + " mm · "
+    + (c.supports_contact_stop
+        ? (c.contact_stop_trusted ? "contact stop" : "contact stop (untrusted)")
+        : "no contact stop");
+
+  $("reset").style.display = c.supports_home ? "" : "none";
+  renderBackendPicker();
+  renderTaskPicker();
+  renderCameraToggles();
+  renderExamples();
+  renderSchema();
+
+  if (!$("editor").value) {
+    $("editor").value = JSON.stringify(CONFIG.examples[0].json, null, 2);
+  }
+  replan();
+}
+
+function renderBackendPicker() {
+  const picker = $("backend"), b = CONFIG.backends;
+  picker.innerHTML = b.available.map((name) =>
+    '<option value="' + name + '"' + (name === b.current ? " selected" : "") + ">"
+    + name + (b.connected.indexOf(name) >= 0 ? "" : " (not connected yet)") + "</option>").join("");
+  picker.onchange = switchBackend;
+}
+
+async function renderTaskPicker() {
+  const tasks = await api("/api/tasks");
+  const box = $("task-pick"), picker = $("task");
+  const suites = Object.keys(tasks.suites || {});
+  if (!suites.length || !tasks.current) { box.style.display = "none"; return; }
+  const cur = tasks.current;
+  // one optgroup per suite: libero_90 alone is ninety entries, and the LIBERO-PRO variants
+  // (_lan, _object, _swap, _task) keep the base suite's order, so index k lines up across them
+  picker.innerHTML = suites.map((suite) =>
+    '<optgroup label="' + suite + '">' + tasks.suites[suite].map((t) =>
+      '<option value="' + suite + ":" + t.index + '"'
+      + (suite === cur.suite && t.index === cur.task_id ? " selected" : "") + ">"
+      + t.index + " · " + t.language + "</option>").join("") + "</optgroup>").join("");
+  picker.title = cur.suite + " / " + cur.task_id + ": " + cur.language;
+  prefillTask(cur.language);              // the mission box starts on the loaded task
+  box.style.display = "";
+  picker.onchange = switchTask;
+}
+
+async function switchTask() {
+  const [suite, index] = $("task").value.split(":");
+  SWITCHING = true;
+  $("caps").textContent = "rebuilding " + suite + " task " + index + "…";
+  setExecutable();
+  try {
+    const reply = await api("/api/task", { suite: suite, task: Number(index) });
+    SWITCHING = false;
+    if (!reply.ok) {
+      $("parse-error").textContent = reply.error;
+      addLog("task switch refused: " + reply.error, "b-bad");
+      await renderTaskPicker();        // put the selection back to what is actually loaded
+      return;
+    }
+    $("parse-error").textContent = "";
+    addLog("task: " + reply.suite + " / " + reply.task_id + " — " + reply.language, "b-ok");
+    el("cams").innerHTML = '<span class="kv">waiting for the first frames…</span>';
+    await boot();                      // capabilities, picker title, and a fresh preview
+  } finally {
+    SWITCHING = false;                 // whatever happened, the page must not stay locked
+    setExecutable();
+  }
+}
+
+async function switchBackend() {
+  const name = $("backend").value;
+  SWITCHING = true;
+  $("caps").textContent = "connecting to " + name + "…";
+  setExecutable();
+  let reply;
+  try {
+    reply = await api("/api/backend", { name: name });
+  } finally {
+    SWITCHING = false;                 // a failed connect must not leave the page locked
+    setExecutable();
+  }
+  if (!reply.ok) {
+    $("caps").textContent = name + " did not connect";
+    $("parse-error").textContent = reply.error;
+    return;
+  }
+  $("parse-error").textContent = "";
+  CAMERAS_ON = {};
+  el("cams").innerHTML = '<span class="kv">waiting for the first frames…</span>';
+  await boot();
+}
+
+function renderExamples() {
+  $("examples").innerHTML = "";
+  CONFIG.examples.forEach((example) => {
+    const button = document.createElement("button");
+    button.className = "small";
+    button.textContent = example.name;
+    button.onclick = () => {
+      $("editor").value = JSON.stringify(example.json, null, 2);
+      replan();
+    };
+    $("examples").appendChild(button);
+  });
+}
+
+// ---------------------------------------------------------------- cameras
+
+function renderCameraToggles() {
+  const names = CONFIG.cameras || [];
+  // Both views get their own copy of the toggles, driven by the one shared CAMERAS_ON map,
+  // so switching a camera off in one tab switches it off in the other.
+  const strips = ["camera-toggles", "mission-camera-toggles"].map($).filter(Boolean);
+  if (!CONFIG.has_cameras || !names.length) {
+    strips.forEach((strip) => { strip.innerHTML = ""; });
+    ["cams", "mission-cams"].map($).filter(Boolean).forEach((box) => {
+      box.innerHTML = '<span class="kv">' + CONFIG.backend + " serves no cameras</span>";
+    });
+    ["cam-stats", "mission-cam-stats"].map($).filter(Boolean).forEach((box) => {
+      box.textContent = "—";
+    });
+    ["surface", "mission-surface"].map($).filter(Boolean).forEach((box) => {
+      box.style.display = "none";
+    });
+    return;
+  }
+  names.forEach((name) => {
+    if (CAMERAS_ON[name] === undefined) CAMERAS_ON[name] = true;
+  });
+  const boxes = names.map((name) =>
+    '<label class="check"><input type="checkbox" class="cam-toggle" data-name="' + name + '"'
+    + (CAMERAS_ON[name] ? " checked" : "") + "> " + name + "</label>").join(" ");
+  strips.forEach((strip, index) => {
+    // Only the console strip carries the overlay switch; pollFrames reads it by id, and two
+    // elements with one id is how you get a switch that silently stops working.
+    strip.innerHTML = boxes + (index === 0
+      ? ' <label class="check"><input type="checkbox" id="overlay-toggle" checked> overlay</label>'
+      : "");
+    strip.querySelectorAll(".cam-toggle").forEach((box) => {
+      box.onchange = () => {
+        CAMERAS_ON[box.dataset.name] = box.checked;
+        syncCameraToggles();
+        // a camera you switched off should disappear at once, not at the next poll
+        if (!box.checked) {
+          const figure = document.getElementById("cam-" + VIEW + "-" + box.dataset.name);
+          if (figure) figure.remove();
+        }
+      };
+    });
+  });
+}
+
+// Keep the two strips agreeing with each other after a change in either one.
+function syncCameraToggles() {
+  document.querySelectorAll(".cam-toggle").forEach((box) => {
+    box.checked = !!CAMERAS_ON[box.dataset.name];
+  });
+}
+
+
+async function pollFrames() {
+  if (!CONFIG || !CONFIG.has_cameras || SWITCHING) return;
+  const wanted = Object.keys(CAMERAS_ON).filter((n) => CAMERAS_ON[n]);
+  if (!wanted.length) {
+    el("cams").innerHTML = '<span class="kv">every camera is switched off</span>';
+    el("cam-stats").textContent = "0 cameras";
+    return;
+  }
+  const started = performance.now();
+  const frames = await api("/api/frames?cameras=" + wanted.join(",")
+    + "&overlay=" + ($("overlay-toggle") && $("overlay-toggle").checked ? "1" : "0"));
+  const elapsed = Math.round(performance.now() - started);
+  if (frames.error) { el("cam-stats").textContent = frames.error; return; }
+
+  const now = Date.now() / 1000;
+  const entries = Object.entries(frames.cameras || {});
+  el("cams").innerHTML = entries.map(([name, camera]) => {
+    const age = camera.timestamp ? Math.round((now - camera.timestamp) * 1000) : null;
+    return '<figure id="cam-' + VIEW + "-" + name + '">'
+      + (camera.rgb_jpeg
+          ? '<img src="data:image/jpeg;base64,' + camera.rgb_jpeg + '" alt="' + name + '">'
+          : '<img alt="no image from ' + name + '">')
+      + "<figcaption><b>" + name + "</b>"
+      + (age === null ? "" : '<span class="' + (age > 2000 ? "stale" : "") + '">' + age + " ms old</span>")
+      + (camera.has_extrinsic ? "" : '<span class="stale">no cam2base</span>')
+      + "</figcaption></figure>";
+  }).join("");
+  el("cam-stats").textContent = entries.length + " of " + Object.keys(CAMERAS_ON).length
+    + " cameras · " + elapsed + " ms round trip";
+  renderSurface(frames.clearance);
+}
+
+// The wrist depth, straight down the approach axis. Below its minimum range it is tracked
+// from the last direct reading instead, and says so.
+function renderSurface(clear) {
+  const box = el("surface"), big = el("surface-clearance"), detail = el("surface-detail");
+  if (!clear) { box.style.display = "none"; return; }
+  box.style.display = "";
+  if (clear.mm === null && clear.tracked_mm === undefined) {
+    big.innerHTML = '<span style="color:var(--warn)">out of range</span>';
+    detail.innerHTML = "<span>" + (clear.reason || "no depth under the tool") + "</span>";
+    return;
+  }
+  if (clear.mm === null) {
+    big.innerHTML = '<span style="color:var(--warn)">~' + fmt(clear.tracked_mm, 0)
+      + '</span> <small>mm, tracked not seen</small>';
+    detail.innerHTML = "<span>last seen <b>" + fmt(clear.tracked_from_mm, 0) + " mm</b></span>"
+      + "<span>descended <b>" + fmt(clear.descended_mm, 0) + " mm</b> since</span>"
+      + '<span class="stale">surface inside the camera\'s minimum range</span>';
+    return;
+  }
+  big.innerHTML = fmt(clear.mm, 0) + ' <small>mm below the tool</small>';
+  detail.innerHTML = "<span>surface <b>" + fmt(clear.surface_z_mm, 0) + " mm</b> in base z</span>"
+    + "<span>median <b>" + fmt(clear.median_mm, 0) + " mm</b></span>"
+    + "<span><b>" + clear.points + "</b> points</span>"
+    + (clear.near_min_range ? '<span class="stale">about to drop out</span>' : "");
+}
+
+// ---------------------------------------------------------------- command and plan
+
+let planTimer = null;
+$("editor").addEventListener("input", () => {
+  clearTimeout(planTimer);
+  planTimer = setTimeout(replan, 350);
+});
+
+async function replan() {
+  let parsed;
+  try {
+    parsed = JSON.parse($("editor").value);
+  } catch (error) {
+    return planFailed("that is not valid JSON yet — " + error.message, "parse");
+  }
+  const result = await api("/api/plan", { command: parsed });
+  if (!result.ok) return planFailed(result.error, result.stage);
+  PLAN = result;
+  $("parse-error").textContent = "";
+  renderPlan(result);
+  setExecutable();
+}
+
+function planFailed(message, stage) {
+  PLAN = null;
+  $("parse-error").textContent = (stage ? "[" + stage + "] " : "") + message;
+  $("plan").innerHTML = '<span class="kv">nothing to run</span>';
+  $("plan-summary").textContent = "";
+  setExecutable();
+}
+
+function setExecutable() {
+  const button = $("execute");
+  button.disabled = !PLAN || RUNNING || SWITCHING || MISSION_RUNNING;
+  $("backend").disabled = RUNNING || SWITCHING || MISSION_RUNNING;
+  $("reset").disabled = RUNNING || SWITCHING || MISSION_RUNNING;
+  $("task").disabled = RUNNING || SWITCHING || MISSION_RUNNING;
+  button.textContent = SWITCHING ? "switching backend…"
+    : MISSION_RUNNING ? "a mission is running"
+    : RUNNING ? "running…"
+    : PLAN ? "Run " + PLAN.plan.steps.length + " steps on " + CONFIG.backend
+             + " (" + fmt(PLAN.plan.total_duration_s, 1) + " s)"
+    : "Fix the command first";
+}
+
+function renderPlan(result) {
+  const plan = result.plan, parts = [];
+  (plan.warnings || []).forEach((w) => parts.push('<div class="warn-box">' + w + "</div>"));
+
+  result.deltas.forEach((d) => {
+    const steps = plan.steps.filter((s) => s.label.indexOf(d.label) === 0);
+    const rows = steps.map((s) =>
+      "<tr><td>" + s.chunk + "</td><td>" + s.kind + "</td><td>"
+      + (s.goal ? vec(s.goal.position_mm, 0) + " mm" : "—") + "</td><td>"
+      + fmt(s.duration_s, 1) + " s</td></tr>").join("");
+    parts.push('<div class="step"><b>' + d.label + "</b><br>"
+      + (d.axis ? '<span class="kv">axis in base </span>' + vec(d.axis, 2) : "")
+      + (d.distance_mm !== undefined ? '<span class="kv"> · </span>' + fmt(d.distance_mm, 1)
+          + " mm at " + fmt(d.speed_mm_s, 1) + " mm/s" : "")
+      + (d.angle_deg !== undefined ? '<span class="kv"> · </span>' + fmt(d.angle_deg, 1)
+          + "° at " + fmt(d.speed_deg_s, 1) + "°/s" : "")
+      + (d.note ? '<div class="note">' + d.note + "</div>" : "")
+      + (steps.length ? "<table><tr><th>#</th><th>kind</th><th>tool goal (absolute)</th>"
+          + "<th>for</th></tr>" + rows + "</table>" : "")
+      + "</div>");
+  });
+  $("plan").innerHTML = parts.join("");
+  $("plan-summary").textContent = vec(plan.start.position_mm, 0) + " → "
+    + vec(plan.end.position_mm, 0) + " mm · " + fmt(plan.total_duration_s, 1) + " s";
+}
+
+// ---------------------------------------------------------------- running
+
+$("execute").onclick = async () => {
+  if (!confirm("The robot will move: " + PLAN.plan.steps.length + " steps on "
+      + CONFIG.backend + ", about " + fmt(PLAN.plan.total_duration_s, 0) + " s.\n\n"
+      + "Stand clear and keep a hand near the E-stop.")) return;
+  const reply = await api("/api/execute", {
+    command: JSON.parse($("editor").value),
+    expect_position_mm: PLAN.plan.start.position_mm,
+  });
+  if (!reply.ok) { $("parse-error").textContent = reply.error; replan(); return; }
+  $("log").innerHTML = "";
+  SEEN = 0;
+  RUNNING = true;
+  setExecutable();
+};
+
+$("reset").onclick = async () => {
+  const reply = await api("/api/reset", {});
+  if (!reply.ok) { addLog("reset refused: " + reply.error, "b-bad"); return; }
+  $("log").innerHTML = "";
+  SEEN = 0;
+  RUNNING = true;
+  RESETTING = true;
+  setExecutable();
+};
+
+$("stop").onclick = async () => {
+  const reply = await api("/api/stop", {});   // cancels the executor loop too
+  addLog(reply.ok ? "STOP sent" : "STOP failed: " + reply.error, reply.ok ? "b-warn" : "b-bad");
+};
+
+function addLog(text, badge) {
+  const row = document.createElement("div");
+  row.innerHTML = badge ? '<span class="badge ' + badge + '">' + text + "</span>" : text;
+  $("log").appendChild(row);
+  $("log").scrollTop = $("log").scrollHeight;
+}
+
+let SEEN = 0;
+async function pollRun() {
+  const run = await api("/api/run");
+  RUNNING = run.running;
+  (run.events || []).slice(SEEN).forEach((event) => {
+    if (event.event === "step_start") {
+      addLog("▶ " + event.label);
+    } else if (event.event === "step_end") {
+      const colour = { done: "b-ok", contact: "b-warn", limited: "b-warn", skipped: "b-dim",
+                       refused: "b-bad", failed: "b-bad" }[event.outcome] || "b-dim";
+      addLog('<span class="badge ' + colour + '">' + event.outcome + "</span> " + event.label
+        + " · moved " + fmt(event.moved_mm) + " mm (" + fmt(event.along_axis_mm) + " along"
+        + (event.lateral_mm > 1 ? ", " + fmt(event.lateral_mm) + " sideways" : "") + ")"
+        + (event.turned_deg > 0.2 ? " · turned " + fmt(event.turned_deg) + "°" : "")
+        + (event.message ? " · " + event.message : ""));
+    } else if (event.event === "stopped_by_operator") {
+      addLog("STOP", "b-warn");
+    }
+  });
+  SEEN = (run.events || []).length;
+  if (RESETTING && !run.running) {
+    // the preview was planned from the pose before the reset; refresh it or the next
+    // execute is refused for drift
+    RESETTING = false;
+    replan();
+  }
+
+  if (run.running) {
+    el("run-status").innerHTML = '<span class="badge b-warn">moving</span>';
+  } else if (run.error) {
+    el("run-status").innerHTML = '<span class="badge b-bad">error</span> ' + run.error;
+  } else if (run.report) {
+    el("run-status").innerHTML = run.report.stopped_early
+      ? '<span class="badge b-warn">stopped early</span>'
+      : '<span class="badge b-ok">finished</span>';
+  }
+  setExecutable();
+}
+
+// ---------------------------------------------------------------- robot state
+
+async function pollState() {
+  if (SWITCHING) return;
+  const status = await api("/api/status");
+  if (!status.connected) {
+    el("state").innerHTML = "<dt>robot</dt><dd>" + (status.error || "not connected") + "</dd>";
+    return;
+  }
+  // The mission tab may be off screen: this is how the console knows a mission is going, so
+  // the pickers stay disabled and pollMission keeps fetching.
+  MISSION_RUNNING = !!(status.mission && status.mission.running);
+  if (status.task_language) prefillTask(status.task_language);
+  const issues = (status.readiness_issues || []).slice();
+  if (status.episode_over) issues.unshift(status.episode_note || "the episode has ended");
+  const badge = $("readiness");
+  if (issues.length) {
+    badge.style.display = "";
+    badge.textContent = issues.length + " readiness issue" + (issues.length === 1 ? "" : "s");
+    badge.title = issues.join("\n");
+    badge.className = "badge " + (issues.some((i) => /validation_failed/.test(i)) ? "b-bad" : "b-warn");
+  } else {
+    badge.style.display = "none";
+  }
+  const gripper = status.gripper || {};
+  const rows = ["<dt>tool</dt><dd>" + status.tool_mm.map((v) => fmt(v, 0)).join(", ") + " mm</dd>"];
+  if (status.flange_mm) {
+    rows.push("<dt>flange</dt><dd>" + status.flange_mm.map((v) => fmt(v, 0)).join(", ") + " mm</dd>");
+  }
+  if (gripper.gap_m !== undefined) {
+    rows.push("<dt>gripper</dt><dd>"
+      + (gripper.gap_m === null ? "gap unmeasured" : fmt(gripper.gap_m * 1000, 1) + " mm")
+      + " " + (gripper.command || "") + "</dd>");
+  }
+  renderGripper(status.gripper_reading, status.grasp);
+  if (status.state !== undefined) {
+    rows.push("<dt>state</dt><dd>" + status.state
+      + (status.error_code ? " · error " + status.error_code : "")
+      + (status.collision ? ' · <span class="badge b-bad">collision</span>' : "") + "</dd>");
+  }
+  // An ended LIBERO episode refuses every motion while looking entirely healthy otherwise,
+  // so it gets its own line and the badge in the header.
+  if (status.episode_over) {
+    rows.push('<dt>episode</dt><dd><span class="badge b-bad">ended</span> '
+      + '<span class="kv">' + (status.episode_note || "reset with a home action") + "</span></dd>");
+  }
+
+  // "parked" is the difference between a robot that is idle and one that will refuse every
+  // job. It is worth its own line rather than being inferred from a state number.
+  if (status.parked !== undefined) {
+    rows.push("<dt>motion</dt><dd>" + (status.parked
+      ? '<span class="badge b-bad">parked</span> <span class="kv">refuses jobs; STOP clears it,'
+        + " and a run clears it automatically</span>"
+      : '<span class="badge b-ok">ready</span>') + "</dd>");
+  }
+  el("state").innerHTML = rows.join("");
+}
+
+// The jaws, drawn from the neutral reading so both backends look the same. The bar is the
+// gripper's whole travel: the two blocks sit where the fingers are, and the green band
+// between them is what the grasp test thinks is being held.
+function renderGripper(reading, grasp) {
+  const box = el("gripper");
+  if (!reading && !grasp) { box.style.display = "none"; return; }
+  box.style.display = "";
+
+  // how far open, 0..1. A measured width is better; a raw count still places the jaws.
+  let fraction = grasp && grasp.closed_fraction !== null ? grasp.closed_fraction : null;
+  if (fraction === null) fraction = 0;
+  fraction = Math.max(0, Math.min(1, fraction));
+
+  const edge = 50 - fraction * 40;                 // where each jaw's inner face sits, in %
+  el("jaw-left").style.right = (50 + fraction * 40) + "%";
+  el("jaw-right").style.left = (50 + fraction * 40) + "%";
+  el("jaws").className = "jaws" + (reading && reading.moving ? " moving" : "");
+
+  const held = el("grip-held");
+  if (grasp && grasp.holding === true) {
+    held.style.display = "";
+    held.style.left = edge + "%";
+    held.style.right = edge + "%";
+  } else {
+    held.style.display = "none";
+  }
+
+  el("grip-badge").innerHTML = !grasp ? ""
+    : grasp.holding === true ? '<span class="badge b-ok">holding</span>'
+    : grasp.holding === false ? '<span class="badge b-dim">nothing held</span>'
+    : '<span class="badge b-warn">unknown</span>';
+
+  const bits = [];
+  if (reading && reading.commanded) bits.push("commanded <b>" + reading.commanded + "</b>");
+  if (reading && reading.moving) bits.push('<b class="stale">moving</b>');
+  if (grasp && grasp.opening_mm !== null) bits.push("<b>" + fmt(grasp.opening_mm, 1) + " mm</b> apart");
+  if (grasp && grasp.closed_fraction !== null) {
+    bits.push("<b>" + fmt(grasp.closed_fraction * 100, 0) + "%</b> open");
+  }
+  if (reading && reading.raw !== null && reading.raw !== undefined) {
+    bits.push("raw <b>" + reading.raw + "</b>"
+      + (reading.raw_closed !== null ? " (" + reading.raw_closed + "–" + reading.raw_open + ")" : ""));
+  }
+  el("grip-detail").innerHTML = bits.join("");
+  el("grip-why").textContent = grasp ? grasp.reason : "";
+}
+
+// ---------------------------------------------------------------- schema reference
+
+function renderSchema() {
+  const s = CONFIG.schema, parts = [];
+  parts.push("<code>" + s.shape.replace(/</g, "&lt;") + "</code>");
+
+  parts.push("<h3>Types — every action has one</h3><table>");
+  s.types.forEach((t) => {
+    parts.push('<tr><td><code>"type": "' + t.type + '"</code></td><td>'
+      + (t.required.length
+          ? '<span>needs</span> ' + t.required.map((f) => "<code>" + f + "</code>").join(", ")
+          : '<span class="muted">no other fields</span>')
+      + (t.optional.length ? ' <span class="muted">· optional</span> '
+          + t.optional.map((f) => "<code>" + f + "</code>").join(", ") : "")
+      + (t.note ? '<br><span class="muted">' + t.note + "</span>" : "") + "</td></tr>");
+  });
+  parts.push("</table>");
+
+  parts.push("<h3>Options</h3><table>");
+  s.options.forEach((o) => parts.push("<tr><td><code>" + o.key + "</code></td><td>"
+    + '<span class="muted">' + (o.note || "") + "</span></td></tr>"));
+  parts.push("</table>");
+
+  parts.push("<h3>Field values — the complete list</h3>");
+  [["type", s.values.type], ["frame", s.values.frame], ["state (gripper)", s.values.state]]
+    .forEach(([field, values]) => parts.push('<div class="muted">' + field
+      + "</div><div class='enum'>" + values.map((v) => "<span>" + v + "</span>").join("") + "</div>"));
+
+  parts.push("<h3>direction — every word</h3>");
+  parts.push('<div class="muted" style="margin-bottom:6px">Click a word to append that action '
+    + "to the command.</div>");
+  Object.entries(CONFIG.frames).forEach(([name, frame]) => {
+    const chips = (words, kind) => words.map((w) =>
+      '<button class="chip' + (kind === "rotate" ? " rot" : "") + '" data-kind="' + kind
+      + '" data-word="' + w + '">' + w + "</button>").join("");
+    const aliases = Object.entries(frame.aliases || {});
+    parts.push('<div class="muted">move · direction</div><div class="chips">'
+      + chips(frame.directions, "move") + "</div>"
+      + '<div class="muted">rotate · direction</div><div class="chips">'
+      + (frame.rotations.length ? chips(frame.rotations, "rotate")
+          : '<span class="muted">none</span>') + "</div>"
+      + (aliases.length ? '<div class="muted">also accepted: '
+          + aliases.map(([a, c]) => a + " → " + c).join(" · ") + "</div>" : ""));
+  });
+
+  const L = s.command_limits;
+  parts.push("<h3>Limits</h3><span class='muted'>one command may ask for at most "
+    + L.max_total_translation_mm + " mm and " + L.max_total_rotation_deg + "°; "
+    + CONFIG.backend + " splits that into steps of at most "
+    + CONFIG.capabilities.max_translation_mm + " mm / "
+    + CONFIG.capabilities.max_rotation_deg + "°.</span>");
+
+  $("schema").innerHTML = parts.join("");
+  $("schema").querySelectorAll("button.chip").forEach((chip) => {
+    chip.onclick = () => appendAction(chip.dataset.kind, chip.dataset.word);
+  });
+}
+
+// Clicking a word builds the action rather than making you recall the field names.
+function appendAction(kind, word) {
+  let command;
+  try {
+    const parsed = JSON.parse($("editor").value);
+    command = (parsed && parsed.actions) ? parsed
+      : { actions: Array.isArray(parsed) ? parsed : [parsed] };
+  } catch (error) {
+    command = { actions: [] };
+  }
+  if (!Array.isArray(command.actions)) command.actions = [];
+  command.actions.push(kind === "rotate"
+    ? { type: "rotate", direction: word, angle_deg: 5 }
+    : { type: "move", direction: word, distance_mm: 20 });
+  $("editor").value = JSON.stringify(command, null, 2);
+  replan();
+}
+
+// ---------------------------------------------------------------- subgoal mode
+
+// The manual editor stays exactly as it was; the mode switch only chooses which pair of
+// panels is on screen. Both share the cameras and the robot column.
+function applyMode() {
+  const subgoal = $("mode").value === "subgoal";
+  $("sec-subgoal").style.display = subgoal ? "" : "none";
+  $("sec-executor").style.display = subgoal ? "" : "none";
+  $("sec-command").style.display = subgoal ? "none" : "";
+  $("sec-plan").style.display = subgoal ? "none" : "";
+}
+$("mode").onchange = applyMode;
+
+$("run-subgoal").onclick = async () => {
+  const text = $("subgoal").value.trim();
+  if (!text) { $("subgoal-error").textContent = "say what the subgoal is"; return; }
+  $("subgoal-error").textContent = "";
+  const reply = await api("/api/executor/start",
+    { subgoal: text, max_cycles: Number($("cycles").value) || 4 });
+  if (!reply.ok) { $("subgoal-error").textContent = reply.error; return; }
+  EXEC_SEEN = 0;
+};
+
+let EXEC_SEEN = 0;
+async function pollExecutor() {
+  if (VIEW !== "console" || $("mode").value !== "subgoal") return;
+  const state = await api("/api/executor");
+  const model = state.model || {};
+  el("model-status").textContent = model.reachable
+    ? model.model + " · " + model.url : "model unreachable: " + (model.detail || "");
+  el("run-subgoal").disabled = state.running || RUNNING || MISSION_RUNNING;
+  el("exec-status").innerHTML = state.running
+    ? '<span class="badge b-warn">working</span>'
+    : state.error ? '<span class="badge b-bad">error</span> ' + state.error
+    : state.cycles.length ? '<span class="badge b-ok">finished</span>' : "";
+  el("exec-timing").textContent = execTimingLine(state.timings);
+  renderExecutorBox($("executor"), state, "console");
+}
+
+// propose / watch / motion, averaged over this subgoal: the same three parts the mission
+// tab's Timing box shows, from the executor session's own events.
+function execTimingLine(timings) {
+  const t = timings || {};
+  const say = (label, part) => label + " " + ((part && part.count)
+    ? fmt(part.mean_s, 1) + " s \u00d7 " + part.count : "\u2014");
+  return [say("propose", t.propose), say("watch", t.supervise),
+          say("motion", t.motion)].join(" \u00b7 ");
+}
+
+// Live from the event stream while it runs, from the cycles once it is done -- the events
+// carry the same fields, so one renderer serves both.
+// What was asked, not just what came back. The prompt carries the legend, the measured
+// objects and the history, so when an answer looks mad this is usually where the reason is.
+function askBlock(prompt, images, label, key) {
+  if (!prompt) return "";
+  const shot = (images && images.length) ? " · " + images.length + " image"
+    + (images.length === 1 ? "" : "s") + ": " + images.join(", ") : "";
+  // data-key is what lets an open block stay open across a re-render (see renderExecutor)
+  return '<details class="ask" data-key="' + (key || "") + '"><summary>'
+    + (label || "input to the model")
+    + " (" + String(prompt).length + " chars" + shot + ")</summary><pre>" + esc(prompt)
+    + "</pre></details>";
+}
+
+// The executor panel is rebuilt from a poll: nothing is rewritten while the state is
+// unchanged, and when it does change, whichever "input to the model" blocks were open reopen.
+let EXECUTOR_DRAWN = {};
+function replacePanel(box, html) {
+  const opened = {};
+  box.querySelectorAll("details[data-key][open]").forEach((d) => { opened[d.dataset.key] = true; });
+  box.innerHTML = html;
+  box.querySelectorAll("details[data-key]").forEach((d) => {
+    if (opened[d.dataset.key]) d.open = true;
+  });
+}
+
+function renderExecutorBox(box, state, key) {
+  const parts = [];
+  if (state.subgoal) {
+    parts.push('<div class="kv">subgoal: <span style="color:var(--text)">'
+      + esc(state.subgoal) + "</span></div>");
+  }
+  const cycles = (state.cycles && state.cycles.length) ? state.cycles
+    : cyclesFromEvents(state.events);
+  parts.push(cyclesHtml(cycles));
+  const html = parts.join("") || '<span class="kv">no subgoal yet</span>';
+  if (EXECUTOR_DRAWN[key] !== html) {
+    replacePanel(box, html);
+    EXECUTOR_DRAWN[key] = html;
+  }
+}
+
+// One motion per block: what the model was asked, what it said, what the controller made of
+// it, what the robot measured, and what the watcher decided while it ran.
+function cyclesHtml(cycles) {
+  const parts = [];
+  cycles.forEach((c) => {
+    const p = c.proposal || {};
+    const said = p.proposal || {};
+    const bits = ['<div class="cycle"><div class="ctitle">motion ' + (c.index + 1) + "</div>"];
+    if (said.assessment) bits.push('<div class="said">\u201c' + esc(said.assessment) + "\u201d</div>");
+    if (said.expect) bits.push('<div class="meta">expects: ' + esc(said.expect) + "</div>");
+    if (said.confidence !== undefined) {
+      bits.push('<div class="meta">confidence ' + fmt(said.confidence, 2)
+        + (p.elapsed_s ? " \u00b7 " + fmt(p.elapsed_s, 1) + " s" : "")
+        + ((p.attempts || []).length > 1 ? " \u00b7 " + p.attempts.length + " attempts" : "")
+        + "</div>");
+    }
+    (p.attempts || []).forEach((a, i) => {
+      if (a.error) bits.push('<div class="note">attempt ' + (i + 1) + " rejected: " + esc(a.error) + "</div>");
+      bits.push(askBlock(a.prompt, a.images,
+                         (p.attempts.length > 1 ? "input, attempt " + (i + 1) : "input to the model"),
+                         "c" + c.index + "-attempt" + i));
+    });
+    if (said.command) bits.push("<pre>" + esc(JSON.stringify(said.command)) + "</pre>");
+    (p.deltas || []).forEach((d) => bits.push('<div class="meta">\u2192 controller: ' + esc(d.label)
+      + (d.axis ? " \u00b7 axis " + vec(d.axis, 2) : "") + "</div>"));
+    (c.supervision || []).forEach((sv, j) => {
+      const colour = sv.decision === "stop" ? "b-warn" : "b-dim";
+      bits.push('<div class="sup"><span class="badge ' + colour + '">' + esc(sv.decision)
+        + "</span> " + esc(sv.because || "") + (sv.evidence ? ' <span class="kv">\u2014 '
+        + esc(sv.evidence) + "</span>" : "")
+        + (sv.error ? ' <span class="stale">(' + esc(sv.error) + ")</span>" : "")
+        + askBlock(sv.prompt, sv.images, "input to this watch", "c" + c.index + "-watch" + j)
+        + "</div>");
+    });
+    (c.steps || []).forEach((st) => bits.push('<div class="meta">robot: <b>' + esc(st.outcome)
+      + "</b> " + esc(st.label) + " \u00b7 moved " + fmt(st.moved_mm) + " mm ("
+      + fmt(st.along_axis_mm) + " along)</div>"));
+    if (c.stopped_by) bits.push('<div class="note">stopped: ' + esc(c.stopped_by) + "</div>");
+    if (c.error) bits.push('<div class="err">' + esc(c.error) + "</div>");
+    parts.push(bits.join("") + "</div>");
+  });
+  return parts.join("");
+}
+
+// While the loop is running the cycles list is not written yet, so rebuild it from events.
+function cyclesFromEvents(events) {
+  const byIndex = {};
+  let current = null;
+  (events || []).forEach((e) => {
+    if (e.event === "proposed") {
+      current = byIndex[e.cycle] = byIndex[e.cycle]
+        || { index: e.cycle, supervision: [], steps: [] };
+      current.proposal = e;
+    } else if (!current) {
+      return;
+    } else if (e.event === "supervision") {
+      current.supervision.push(e);
+    } else if (e.event === "step_end") {
+      current.steps.push(e);
+    } else if (e.event === "step_error") {
+      current.error = e.error;
+    }
+  });
+  return Object.keys(byIndex).sort((a, b) => a - b).map((k) => byIndex[k]);
+}
+
+// ---------------------------------------------------------------- the tabs
+
+function showView(name) {
+  VIEW = name;
+  ["console", "mission"].forEach((view) => {
+    $("view-" + view).style.display = view === name ? "" : "none";
+    $("tab-" + view).setAttribute("aria-selected", String(view === name));
+  });
+  // Drop the other view's camera figures. Both <main>s stay in the document, and a stale
+  // <figure> keeps an id that the newly active view is about to want.
+  const stale = name === "mission" ? $("cams") : $("mission-cams");
+  if (stale) stale.innerHTML = '<span class="kv">waiting for the first frames…</span>';
+  if (CONFIG) renderCameraToggles();
+  if (name === "mission") pollMission();     // do not wait 700 ms to fill an empty tab
+}
+// The picture size is a viewing preference, so it is remembered rather than reset on reload.
+function applyCameraSize(px) {
+  document.documentElement.style.setProperty("--cam", px + "px");
+  try { localStorage.setItem("camSize", String(px)); } catch (error) { /* private window */ }
+}
+if ($("cam-size")) {
+  let saved = null;
+  try { saved = localStorage.getItem("camSize"); } catch (error) { saved = null; }
+  if (saved) $("cam-size").value = saved;
+  applyCameraSize($("cam-size").value);
+  $("cam-size").oninput = () => applyCameraSize($("cam-size").value);
+}
+
+$("tab-console").onclick = () => showView("console");
+$("tab-mission").onclick = () => showView("mission");
+
+// ---------------------------------------------------------------- the mission tab
+
+// One whole task: the planner writes the subgoals, the executor drives them, the monitor
+// watches, the memory summarises. Everything on this tab comes from one snapshot, because
+// the server derives it from the mission's own event stream -- the page holds no state about
+// a mission beyond what it last drew.
+
+let MISSION_POLLING = false;             // one snapshot request in flight at a time
+let TASK_PREFILL = "";                   // what we typed into the box, so an edit is kept
+const MISSION_DRAWN = {};
+const STATE_BADGE = { pending: "b-dim", running: "b-warn", done: "b-ok", not_done: "b-bad",
+                      replanned_away: "b-dim" };
+
+// The task box starts on the task that is actually loaded, and stays there until someone
+// edits it; a task switch re-fills it, an edited box is left alone.
+function prefillTask(language) {
+  const box = $("mission-task");
+  if (!box || !language) return;
+  const now = box.value.trim();
+  if (!now || now === TASK_PREFILL) {
+    box.value = language;
+    TASK_PREFILL = language;
+  }
+}
+
+// Redraw only what changed: the boxes are rebuilt from a poll every 700 ms, and rewriting
+// them every tick throws away a text selection and scrolls the log back to the top.
+function drawOnce(id, html) {
+  if (MISSION_DRAWN[id] === html) return false;
+  MISSION_DRAWN[id] = html;
+  $(id).innerHTML = html;
+  return true;
+}
+
+$("mission-run").onclick = async () => {
+  const task = $("mission-task").value.trim();
+  if (!task) { $("mission-error").textContent = "say what the task is"; return; }
+  $("mission-error").textContent = "";
+  const reply = await api("/api/mission/start", {
+    task: task,
+    budget: Number($("mission-budget").value) || 10,
+    monitor: $("mission-monitor").checked,
+  });
+  if (!reply.ok) { $("mission-error").textContent = reply.error; return; }
+  MISSION_RUNNING = true;
+  pollMission();
+};
+
+$("mission-stop-btn").onclick = async () => {
+  const reply = await api("/api/mission/stop", {});
+  if (!reply.ok) $("mission-error").textContent = reply.error;
+};
+
+async function pollMission() {
+  if (MISSION_POLLING) return;
+  if (VIEW !== "mission" && !MISSION_RUNNING) return;
+  MISSION_POLLING = true;
+  try {
+    const snapshot = await api("/api/mission");
+    if (snapshot.ok === false) return;            // no answer from the server
+    MISSION_RUNNING = !!snapshot.running;
+    renderMission(snapshot);
+  } finally {
+    MISSION_POLLING = false;
+  }
+}
+
+function renderMission(snapshot) {
+  const models = snapshot.models || {};
+  $("mission-models").innerHTML = ["planner", "executor"].map((role) => {
+    const m = models[role] || {};
+    return '<span class="badge ' + (m.reachable ? "b-ok" : "b-bad") + '" title="'
+      + esc(m.detail || "not checked") + '">' + role + "</span>";
+  }).join(" ");
+
+  // Run is offered only when every model the run will need is answering and nothing else on
+  // the page is moving the robot -- the server refuses all of those, and a button that looks
+  // available and is refused is worse than one that says why.
+  const needed = ["planner", "executor"];
+  const ready = needed.every((role) => (models[role] || {}).reachable);
+  const busy = snapshot.running || snapshot.busy || RUNNING || SWITCHING;
+  $("mission-run").disabled = !ready || busy;
+  $("mission-run").textContent = snapshot.running ? "running…"
+    : !ready ? "a model is unreachable"
+    : busy ? "something else is running" : "Run mission";
+  $("mission-stop-btn").disabled = !snapshot.running;
+
+  const finished = snapshot.finished || {};
+  $("mission-status").innerHTML = snapshot.running
+    ? '<span class="badge b-warn">running</span> ' + esc(snapshot.task)
+    : (snapshot.status && snapshot.status !== "idle")
+      ? '<span class="badge ' + (snapshot.status === "task_done" ? "b-ok" : "b-warn") + '">'
+        + esc(snapshot.status) + "</span> " + (finished.total_cycles || 0) + " motions · "
+        + fmt(finished.elapsed_s, 0) + " s"
+        + (snapshot.error ? ' <span class="kv">· ' + esc(snapshot.error) + "</span>" : "")
+      : '<span class="kv">nothing has been run yet</span>';
+
+  renderPlanner(snapshot);
+  renderExecutorBox($("mission-executor"), snapshot.executor || {}, "mission");
+  const running = (snapshot.subgoals || []).filter((r) => r.state === "running")[0];
+  $("mission-exec-status").innerHTML = running
+    ? '<span class="badge b-warn">' + esc(running.name) + "</span>"
+    : snapshot.running ? '<span class="badge b-dim">between subgoals</span>' : "";
+  renderMemory(snapshot);
+  renderTiming(snapshot);
+}
+
+// What each part of the mission costs: the model calls time themselves and say so in their
+// events, so this is their arithmetic mean over the run so far rather than anything the page
+// measured. A part nothing has happened for yet is a dash, not a zero.
+const TIMING_ROWS = [
+  ["plan", "planner", "writing the plan, and every replan"],
+  ["verify", "verify", "judging one subgoal, and the task at the end"],
+  ["monitor", "monitor look", "one look at the scene while a motion runs"],
+  ["note", "memory note", "summarising the evidence log"],
+  ["propose", "executor propose", "asking for the next motion"],
+  ["supervise", "executor watch", "one check while the motion runs"],
+  ["motion", "robot motion", "the robot actually moving"],
+  ["cycle", "one motion cycle", "propose to the next proposal: the whole round"],
+  ["subgoal", "one subgoal", "subgoal_start to the verdict that judged it"],
+];
+
+function renderTiming(snapshot) {
+  const timings = snapshot.timings || {};
+  const rows = TIMING_ROWS.map(([key, label, why]) => {
+    const part = timings[key] || {};
+    const none = !part.count;
+    return '<tr class="' + (none ? "none" : "") + '" title="' + esc(why) + '">'
+      + "<td>" + esc(label) + "</td>"
+      + '<td class="mean">' + (none ? "\u2014" : fmt(part.mean_s, 1) + " s") + "</td>"
+      + "<td>" + (none ? "\u2014" : part.count) + "</td>"
+      + "<td>" + (none ? "\u2014" : fmt(part.total_s, 1) + " s") + "</td></tr>";
+  });
+  const wall = snapshot.wall_s || 0;
+  rows.push('<tr class="wall"><td>the mission</td><td class="mean">'
+    + (wall ? fmt(wall, 1) + " s" : "\u2014") + '</td><td colspan="2">wall time so far</td></tr>');
+  drawOnce("mission-timing", '<table class="timing"><tr><th>part</th><th>mean</th>'
+    + "<th>n</th><th>total</th></tr>" + rows.join("") + "</table>");
+  $("mission-wall").textContent = wall ? fmt(wall, 1) + " s" : "";
+}
+
+// The plan as it stands, every subgoal it ever held, and what each was judged on. A subgoal
+// a replan dropped stays, struck through, with the version it belonged to: what was tried and
+// abandoned is most of what a mission has to show.
+function renderPlanner(snapshot) {
+  const plans = snapshot.plans || [], rows = snapshot.subgoals || [], parts = [];
+  plans.forEach((plan) => {
+    parts.push('<div class="meta">plan v' + plan.version + " · " + plan.subgoals + " subgoals"
+      + (plan.trigger ? ' <span class="kv">— ' + esc(plan.trigger) + "</span>" : "")
+      + (plan.rationale ? '<div class="kv">' + esc(plan.rationale) + "</div>" : "")
+      + (plan.clamped || []).map((c) => '<div class="note">clamped: ' + esc(c) + "</div>").join("")
+      + "</div>");
+  });
+  rows.forEach((row) => {
+    const verdict = row.verdict || {};
+    const bits = ['<div class="sg' + (row.state === "running" ? " on" : "")
+      + (row.away ? " away" : "") + '">'];
+    bits.push('<div><span class="sgname">' + row.n + ". " + esc(row.name) + "</span> "
+      + '<span class="badge ' + (STATE_BADGE[row.state] || "b-dim") + '">'
+      + esc(String(row.state).replace("_", " ")) + "</span>"
+      + '<span class="kv"> · v' + row.version
+      + (row.max_cycles ? " · up to " + row.max_cycles + " motions" : "")
+      + (row.attempt > 1 ? " · attempt " + row.attempt : "")
+      + (row.gripper_only ? " · gripper only" : "") + "</span></div>");
+    if (row.subgoal) bits.push('<div class="said">' + esc(row.subgoal) + "</div>");
+    if (row.target) bits.push('<div class="crit">the object: ' + esc(row.target) + "</div>");
+    if (row.criterion) bits.push('<div class="crit">done when: ' + esc(row.criterion) + "</div>");
+    (row.alerts || []).forEach((alert) => bits.push('<div class="note">! the monitor said '
+      + esc(alert.level) + " (" + esc(alert.finding) + "): " + esc(alert.because) + "</div>"));
+    if (verdict.status) {
+      bits.push('<div class="sup"><span class="badge '
+        + (verdict.status === "not_done" || verdict.status === "abort" ? "b-bad" : "b-ok")
+        + '">' + esc(verdict.status) + "</span> " + esc(verdict.because)
+        + (verdict.evidence ? ' <span class="kv">— ' + esc(verdict.evidence) + "</span>" : "")
+        + (verdict.replan ? ' <span class="badge b-warn">replan</span>' : "") + "</div>");
+    } else if (verdict.because) {
+      bits.push('<div class="note">' + esc(verdict.because) + "</div>");
+    }
+    parts.push(bits.join("") + "</div>");
+  });
+  const task = snapshot.task_verdict || {};
+  if (task.status) {
+    parts.push('<div class="sg on"><div><span class="sgname">the task</span> '
+      + '<span class="badge ' + (task.status === "task_done" ? "b-ok" : "b-bad") + '">'
+      + esc(task.status) + "</span></div>"
+      + '<div class="said">' + esc(task.because) + "</div>"
+      + (task.evidence ? '<div class="crit">' + esc(task.evidence) + "</div>" : "") + "</div>");
+  }
+  drawOnce("mission-plan", parts.join("") || '<span class="kv">no plan yet</span>');
+  const last = plans.length ? plans[plans.length - 1] : null;
+  $("mission-plan-summary").textContent = last
+    ? "v" + last.version + " · " + rows.filter((r) => r.state === "done" && !r.away).length
+      + " of " + last.subgoals + " done" : "";
+}
+
+// What the memory made of it: the newest note it accepted, and the evidence log beneath it.
+// A note the summariser failed to write is not a note -- the previous one is still what the
+// planner is holding, and it says so.
+function renderMemory(snapshot) {
+  const notes = snapshot.notes || [];                // newest first
+  const latest = notes.filter((n) => n.note)[0] || null;
+  const head = notes[0] || null;
+  const parts = [];
+  if (!notes.length) {
+    parts.push('<span class="kv">nothing summarised yet</span>');
+  } else {
+    parts.push('<div class="meta">note v' + (latest ? latest.version : 0)
+      + (head && head.fallback
+          ? ' <span class="badge b-warn">carried over</span> <span class="kv">'
+            + esc(head.error || "the summariser wrote nothing usable") + "</span>"
+          : "") + "</div>");
+    if (latest) {
+      const note = latest.note || {};
+      parts.push('<div class="said">' + esc(note.summary) + "</div>");
+      [["failures", note.failures], ["facts", note.facts], ["advice", note.advice]]
+        .forEach(([label, list]) => {
+          if (!list || !list.length) return;
+          parts.push('<div class="crit">' + label + "</div><ul>"
+            + list.map((line) => "<li>" + esc(line) + "</li>").join("") + "</ul>");
+        });
+    } else {
+      parts.push('<span class="kv">no note has been accepted yet</span>');
+    }
+  }
+  drawOnce("mission-note", '<div class="mnote">' + parts.join("") + "</div>");
+  $("mission-note-version").textContent = (snapshot.log || []).length
+    ? (snapshot.log || []).length + " rows" : "";
+  const drew = drawOnce("mission-log", (snapshot.log || [])
+    .map((line) => "<div>" + esc(line) + "</div>").join("")
+    || '<div class="kv">the evidence log is empty</div>');
+  if (drew) $("mission-log").scrollTop = $("mission-log").scrollHeight;
+}
+
+// ---------------------------------------------------------------- loops
+
+// One frames request at a time: over a 250 ms tunnel a fixed interval would stack them up.
+async function frameLoop() {
+  for (;;) {
+    try { await pollFrames(); } catch (error) { /* keep the loop alive */ }
+    await new Promise((resolve) => setTimeout(resolve, 350));
+  }
+}
+
+boot();
+applyMode();
+frameLoop();
+setInterval(pollState, 500);
+setInterval(pollRun, 400);
+setInterval(pollExecutor, 600);
+// Only while the mission tab is up or a mission is going -- the snapshot is derived from the
+// whole event stream, and there is no reason to build it for a tab nobody is looking at.
+setInterval(pollMission, 700);
+</script>
+</body>
+</html>

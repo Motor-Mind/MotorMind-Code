@@ -1,0 +1,116 @@
+# The bowl chain of grasp_lift.yaml, on the three libero_spatial scenes round 30 died on
+# (round 30, fix 3): approach the rim, close, lift -- and the
+# question at the end is whether the bowl went up with the tool and is still between the
+# jaws. The scenes are 2, 5 and 7; in every one the goal bowl is akita_black_bowl_1, and each
+# scene has a second black bowl, so the words name the bowl the way the task language does
+# ("from table center", "on the ramekin", "on the stove") rather than as "the black bowl" --
+# a grounding coin-flip here would confound a grasp-depth measurement.
+#
+# Chains are sequential: a subgoal that fails ends its chain, since the next one would start
+# from a state the failed one was supposed to produce. Each chain restarts from the task's
+# initial state, at whatever --seed the runner was given.
+
+version: 1
+suite: libero_spatial
+task_id: 2
+sequential: true
+
+subgoals:
+  # ---- scene 2: the bowl at the centre of the table ----
+  - name: s2_approach
+    suite: libero_spatial
+    task_id: 2
+    subgoal: >
+      bring the gripper to the rim of the black bowl at the centre of the table where the jaws
+      can pinch it: the LEFT or RIGHT side of the bowl as the wrist camera sees it, where the
+      rim runs up-down the picture through the middle of the gap between the jaws, so one jaw
+      is over the bowl's inside and the other over the table outside. Come down as you go, and
+      keep correcting sideways so that stretch of rim stays centred between the jaws
+    criterion: >
+      In the wrist view the bowl's rim passes up-down the picture through the centre of the
+      gap between the jaws -- one jaw over the bowl's inside, the other over the table
+      outside it -- and the tool is level with the rim or a little below it. Judge this from
+      the jaws once you are close.
+    check: {fn: at_grasp_point, body: akita_black_bowl_1_main, part: rim, within_mm: 25, above_mm: [-20, 40]}
+    max_cycles: 12
+    continue_on_fail: true
+
+  - name: s2_grasp
+    subgoal: close the gripper on the rim of the black bowl at the centre of the table so that the rim is held between the jaws
+    criterion: The robot reports that it is holding something.
+    check: {fn: holding_object}
+    max_cycles: 10
+
+  - name: s2_lift
+    subgoal: lift the bowl straight up by about 10 cm, keeping hold of it
+    criterion: >
+      The tool's z has increased by at least 80 mm from where this subgoal started and the
+      robot still reports holding something.
+    check: {fn: object_lifted, body: akita_black_bowl_1_main, at_least_mm: 60}
+    max_cycles: 4
+
+  # ---- scene 5: the bowl standing on the ramekin ----
+  - name: s5_approach
+    suite: libero_spatial
+    task_id: 5
+    subgoal: >
+      bring the gripper to the rim of the black bowl that is standing on the ramekin where the
+      jaws can pinch it: the LEFT or RIGHT side of the bowl as the wrist camera sees it, where
+      the rim runs up-down the picture through the middle of the gap between the jaws, so one
+      jaw is over the bowl's inside and the other over the outside. Come down as you go, and
+      keep correcting sideways so that stretch of rim stays centred between the jaws
+    criterion: >
+      In the wrist view the bowl's rim passes up-down the picture through the centre of the
+      gap between the jaws -- one jaw over the bowl's inside, the other over the outside --
+      and the tool is level with the rim or a little below it. Judge this from the jaws once
+      you are close.
+    check: {fn: at_grasp_point, body: akita_black_bowl_1_main, part: rim, within_mm: 25, above_mm: [-20, 40]}
+    max_cycles: 12
+    continue_on_fail: true
+
+  - name: s5_grasp
+    subgoal: close the gripper on the rim of the black bowl on the ramekin so that the rim is held between the jaws
+    criterion: The robot reports that it is holding something.
+    check: {fn: holding_object}
+    max_cycles: 10
+
+  - name: s5_lift
+    subgoal: lift the bowl straight up by about 10 cm, keeping hold of it
+    criterion: >
+      The tool's z has increased by at least 80 mm from where this subgoal started and the
+      robot still reports holding something.
+    check: {fn: object_lifted, body: akita_black_bowl_1_main, at_least_mm: 60}
+    max_cycles: 4
+
+  # ---- scene 7: the bowl standing on the stove ----
+  - name: s7_approach
+    suite: libero_spatial
+    task_id: 7
+    subgoal: >
+      bring the gripper to the rim of the black bowl that is standing on the stove where the
+      jaws can pinch it: the LEFT or RIGHT side of the bowl as the wrist camera sees it, where
+      the rim runs up-down the picture through the middle of the gap between the jaws, so one
+      jaw is over the bowl's inside and the other over the outside. Come down as you go, and
+      keep correcting sideways so that stretch of rim stays centred between the jaws
+    criterion: >
+      In the wrist view the bowl's rim passes up-down the picture through the centre of the
+      gap between the jaws -- one jaw over the bowl's inside, the other over the outside --
+      and the tool is level with the rim or a little below it. Judge this from the jaws once
+      you are close.
+    check: {fn: at_grasp_point, body: akita_black_bowl_1_main, part: rim, within_mm: 25, above_mm: [-20, 40]}
+    max_cycles: 12
+    continue_on_fail: true
+
+  - name: s7_grasp
+    subgoal: close the gripper on the rim of the black bowl on the stove so that the rim is held between the jaws
+    criterion: The robot reports that it is holding something.
+    check: {fn: holding_object}
+    max_cycles: 10
+
+  - name: s7_lift
+    subgoal: lift the bowl straight up by about 10 cm, keeping hold of it
+    criterion: >
+      The tool's z has increased by at least 80 mm from where this subgoal started and the
+      robot still reports holding something.
+    check: {fn: object_lifted, body: akita_black_bowl_1_main, at_least_mm: 60}
+    max_cycles: 4

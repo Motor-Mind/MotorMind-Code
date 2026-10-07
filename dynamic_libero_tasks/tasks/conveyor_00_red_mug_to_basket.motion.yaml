@@ -1,0 +1,14 @@
+type: linear
+start:
+- -0.1
+- -0.45
+end:
+- -0.1
+- 0.45
+speed: 0.015
+loop: false
+width: 0.14
+moving:
+- porcelain_mug_1
+- red_coffee_mug_1
+- white_yellow_mug_1

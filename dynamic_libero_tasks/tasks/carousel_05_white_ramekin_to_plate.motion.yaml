@@ -1,0 +1,11 @@
+type: circular
+center:
+- -0.06
+- 0.02
+omega: 0.12
+radius: 0.25
+moving:
+- glazed_rim_porcelain_ramekin_1
+- red_ramekin_1
+- akita_black_bowl_1
+- white_bowl_1

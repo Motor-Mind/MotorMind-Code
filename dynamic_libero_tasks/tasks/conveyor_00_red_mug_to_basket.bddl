@@ -1,0 +1,78 @@
+(define (problem LIBERO_Dynamic_Tabletop_Manipulation)
+  (:domain robosuite)
+  (:language pick up the red mug from the conveyor belt and place it in the basket)
+    (:regions
+      (porcelain_mug_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1100 -0.3600 -0.0900 -0.3400)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (red_coffee_mug_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1100 -0.2100 -0.0900 -0.1900)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (white_yellow_mug_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1100 -0.0600 -0.0900 -0.0400)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (basket_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.3100 -0.3300 -0.2900 -0.3100)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+    )
+
+  (:fixtures
+    main_table - table
+  )
+
+  (:objects
+    porcelain_mug_1 - porcelain_mug
+    red_coffee_mug_1 - red_coffee_mug
+    white_yellow_mug_1 - white_yellow_mug
+    basket_1 - basket
+  )
+
+  (:obj_of_interest
+    red_coffee_mug_1
+    basket_1
+  )
+
+  (:init
+    (On porcelain_mug_1 main_table_porcelain_mug_1_region)
+    (On red_coffee_mug_1 main_table_red_coffee_mug_1_region)
+    (On white_yellow_mug_1 main_table_white_yellow_mug_1_region)
+    (On basket_1 main_table_basket_1_region)
+  )
+
+  (:goal
+    (And (On red_coffee_mug_1 basket_1))
+  )
+
+)

@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<!--
+  UFACTORY xArm6 + UFACTORY gripper kinematic chain for cuRobo (agent A2, merged from glmharness/armsim).
+
+  Numbers transcribed from a UFACTORY xArm6 MJCF scene (<pkg>/mujoco/scene.xml of an internal
+  dataset; bodies xarm6_base .. xarm6_link6, xarm_gripper_base, site xarm_gripper_tcp),
+  and cross-checked against the r2s2r cuRobo template vendored at
+  ../vendor/xarm6_r2s2r_template.urdf: identical joint origins and limits.
+  Meshes (UFACTORY LICENSE in ../assets/xarm6/meshes/LICENSE) copied from the same
+  package into ../assets/xarm6/meshes/.
+
+  Link names are normalised to the xArm7 scheme (link_base, link1..link6,
+  xarm_gripper_base_link) so one loader and one profile shape serve both arms.
+-->
+<!-- Collision geometry is the sphere set in xarm6.yml (mesh_link_names: []), so the
+     <collision> mesh references were removed: no STL files are needed to load this. -->
+<robot name="xarm6">
+  <link name="link_base">
+  </link>
+  <link name="link1">
+  </link>
+  <link name="link2">
+  </link>
+  <link name="link3">
+  </link>
+  <link name="link4">
+  </link>
+  <link name="link5">
+  </link>
+  <link name="link6">
+  </link>
+  <link name="xarm_gripper_base_link">
+  </link>
+  <link name="left_finger">
+  </link>
+  <link name="right_finger">
+  </link>
+
+  <joint name="joint1" type="revolute">
+    <parent link="link_base"/><child link="link1"/>
+    <origin xyz="0 0 0.267" rpy="0 0 0"/><axis xyz="0 0 1"/>
+    <limit lower="-6.28319" upper="6.28319" effort="50" velocity="3.14"/>
+  </joint>
+  <joint name="joint2" type="revolute">
+    <parent link="link1"/><child link="link2"/>
+    <origin xyz="0 0 0" rpy="-1.5707963267948966 0 0"/><axis xyz="0 0 1"/>
+    <limit lower="-2.059" upper="2.0944" effort="50" velocity="3.14"/>
+  </joint>
+  <joint name="joint3" type="revolute">
+    <parent link="link2"/><child link="link3"/>
+    <origin xyz="0.0535 -0.2845 0" rpy="0 0 0"/><axis xyz="0 0 1"/>
+    <limit lower="-3.927" upper="0.19198" effort="32" velocity="3.14"/>
+  </joint>
+  <joint name="joint4" type="revolute">
+    <parent link="link3"/><child link="link4"/>
+    <origin xyz="0.0775 0.3425 0" rpy="-1.5707963267948966 0 0"/><axis xyz="0 0 1"/>
+    <limit lower="-6.28319" upper="6.28319" effort="32" velocity="3.14"/>
+  </joint>
+  <joint name="joint5" type="revolute">
+    <parent link="link4"/><child link="link5"/>
+    <origin xyz="0 0 0" rpy="1.5707963267948966 0 0"/><axis xyz="0 0 1"/>
+    <limit lower="-1.69297" upper="3.14159" effort="32" velocity="3.14"/>
+  </joint>
+  <joint name="joint6" type="revolute">
+    <parent link="link5"/><child link="link6"/>
+    <origin xyz="0.076 0.097 0" rpy="-1.5707963267948966 0 0"/><axis xyz="0 0 1"/>
+    <limit lower="-6.28319" upper="6.28319" effort="20" velocity="3.14"/>
+  </joint>
+  <!-- Identity, matching A1's model: `right_hand` sits on link6 with identity
+       and the gripper root `right_gripper` on right_hand with identity.
+       URDF `link6`                  == robosuite `robot0_right_hand`
+       URDF `xarm_gripper_base_link` == robosuite `gripper0_right_gripper`. -->
+  <joint name="gripper_fix" type="fixed">
+    <parent link="link6"/><child link="xarm_gripper_base_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <joint name="left_finger_fix" type="fixed">
+    <parent link="xarm_gripper_base_link"/><child link="left_finger"/>
+    <origin xyz="0 0.070465 0.101137" rpy="0 0 0"/>
+  </joint>
+  <joint name="right_finger_fix" type="fixed">
+    <parent link="xarm_gripper_base_link"/><child link="right_finger"/>
+    <origin xyz="0 -0.070465 0.101137" rpy="0 0 0"/>
+  </joint>
+</robot>

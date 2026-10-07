@@ -1,0 +1,78 @@
+(define (problem LIBERO_Dynamic_Tabletop_Manipulation)
+  (:domain robosuite)
+  (:language pick up the yellow and white mug from the conveyor belt and place it on the plate)
+    (:regions
+      (white_yellow_mug_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1100 -0.3600 -0.0900 -0.3400)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (red_coffee_mug_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1100 -0.2100 -0.0900 -0.1900)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (porcelain_mug_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.1100 -0.0600 -0.0900 -0.0400)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+      (plate_1_region
+          (:target main_table)
+          (:ranges (
+              (-0.3100 -0.3300 -0.2900 -0.3100)
+            )
+          )
+          (:yaw_rotation (
+              (0.0 0.0)
+            )
+          )
+      )
+    )
+
+  (:fixtures
+    main_table - table
+  )
+
+  (:objects
+    white_yellow_mug_1 - white_yellow_mug
+    red_coffee_mug_1 - red_coffee_mug
+    porcelain_mug_1 - porcelain_mug
+    plate_1 - plate
+  )
+
+  (:obj_of_interest
+    white_yellow_mug_1
+    plate_1
+  )
+
+  (:init
+    (On white_yellow_mug_1 main_table_white_yellow_mug_1_region)
+    (On red_coffee_mug_1 main_table_red_coffee_mug_1_region)
+    (On porcelain_mug_1 main_table_porcelain_mug_1_region)
+    (On plate_1 main_table_plate_1_region)
+  )
+
+  (:goal
+    (And (On white_yellow_mug_1 plate_1))
+  )
+
+)

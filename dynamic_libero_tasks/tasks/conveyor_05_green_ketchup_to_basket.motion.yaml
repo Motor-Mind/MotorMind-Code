@@ -1,0 +1,14 @@
+type: linear
+start:
+- -0.1
+- 0.45
+end:
+- -0.1
+- -0.45
+speed: 0.015
+loop: false
+width: 0.14
+moving:
+- ketchup_1
+- blue_ketchup_1
+- green_ketchup_1

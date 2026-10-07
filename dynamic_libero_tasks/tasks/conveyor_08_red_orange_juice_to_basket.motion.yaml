@@ -1,0 +1,15 @@
+type: linear
+start:
+- -0.1
+- 0.45
+end:
+- -0.1
+- -0.45
+speed: 0.0175
+loop: false
+width: 0.14
+moving:
+- milk_1
+- red_orange_juice_1
+- orange_juice_1
+- yellow_milk_1

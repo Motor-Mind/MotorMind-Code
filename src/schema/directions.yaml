@@ -1,0 +1,34 @@
+version: 2
+
+frame: base
+
+directions:
+  forward:  [ 1,  0,  0]
+  backward: [-1,  0,  0]
+  left:     [ 0,  1,  0]
+  right:    [ 0, -1,  0]
+  up:       [ 0,  0,  1]
+  down:     [ 0,  0, -1]
+
+rotations:
+  yaw_left:   {axis: [0, 0, 1], sign:  1}
+  yaw_right:  {axis: [0, 0, 1], sign: -1}
+  pitch_up:   {axis: [0, 1, 0], sign: -1}
+  pitch_down: {axis: [0, 1, 0], sign:  1}
+  roll_ccw:   {axis: [1, 0, 0], sign:  1}
+  roll_cw:    {axis: [1, 0, 0], sign: -1}
+
+# Other spellings of the same motion, resolved by convert._axis_for before the table above is
+# consulted. A control is described by the way a HAND turns it -- a stove knob is turned
+# clockwise, a tap anticlockwise -- and a model asked to turn one writes that word: measured on
+# task 2, an executor that had the knob in its jaws spent two of its attempts being told
+# "'clockwise' is not a rotation word". Seen from above, with z up, clockwise is the negative
+# turn about z, which is yaw_right. Nothing is added to the robot here: these resolve to
+# motions it already had.
+aliases:
+  clockwise:         yaw_right
+  anticlockwise:     yaw_left
+  counterclockwise:  yaw_left
+  counter_clockwise: yaw_left
+  cw:                yaw_right
+  ccw:               yaw_left
