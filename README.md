@@ -3,6 +3,7 @@
 **Scaffolding General Vision Language Models for Zero-Shot Robot Manipulation**
 
 Bingxuan Li\*, Siqi Song\*, Yizhuo Wu\*, Jiarui Yao, Tong Zhang, Huan Zhang
+
 University of Illinois Urbana-Champaign
 
 [Project page](https://motor-mind.github.io) · [Paper](https://arxiv.org/pdf/2609.38078)
@@ -211,8 +212,14 @@ resume runs it again.
 ### The real xArm6
 
 The robot PC runs a bridge, an HTTP service in front of the arm, its gripper and its cameras.
-**`adapter/xarm6/README.md` is its contract**: every route, header, unit and safety rule. Hand
+**The [bridge documentation](adapter/xarm6/README.md) is its contract**: every route, header, unit and safety rule. Hand
 it to whoever runs the robot PC.
+
+`XARM_BRIDGE_TOKEN` is the access credential for the robot PC's bridge service. Obtain it from running the bridge and set it on the machine running MotorMind. MotorMind sends it
+in the `X-Bridge-Token` HTTP header; the bridge rejects requests with a missing or incorrect
+token. This is separate from any model API key and does not change when you change the
+workspace scene. See the [bridge authentication rules](adapter/xarm6/README.md#3-safety-rules-the-bridge-enforces-non-negotiable) for
+the protocol requirements.
 
 ```bash
 # check a bridge against the contract (the robot PC can run this, stdlib only)
@@ -232,6 +239,54 @@ STORM_RIG=my-rig python web/server.py --port 3008 --bridge http://<robot-pc>:187
 with what was measured on one rig; `robot/rigs/x-arm6.yaml` is the rig MotorMind was fitted on, and
 is the default. The bridge's contact detection is marked `trusted: false` until the robot PC
 fixes it, so `stop_on_contact` (and therefore a push) is not reliable on the real arm.
+
+#### Configuring your own workstation
+
+A rig profile describes the robot, its workspace, its cameras and its bridge connection.
+This configuration mechanism supports another xArm6 workstation using the compatible bridge
+described above. A different robot model needs a suitable adapter or compatible implementation;
+a YAML file alone does not provide that integration.
+
+Copy `robot/rigs/TEMPLATE.yaml` to `robot/rigs/my-rig.yaml` and replace the example values with
+your workstation's measurements. Set `bridge.url` to your bridge address and provide
+`XARM_BRIDGE_TOKEN` before running the calibration check. `tools/calibrate_rig.py` reports
+measurements and differences; it **does not update the YAML file**. Copy the applicable values
+back into your profile. Its optional `--gripper` flag opens and closes the physical gripper.
+
+For the same robot in a different scene, review these settings:
+
+| What changed | What to update |
+|---|---|
+| Table height relative to the robot base | `workspace.table_z_mm`, in millimetres in the base frame |
+| Required minimum tool height above the table | `workspace.floor_above_table_mm` |
+| Maximum height of objects in the workspace | `workspace.max_object_height_mm`, used to estimate localization error when height has not been measured |
+| Object positions only | Usually no profile change; positions are obtained from observations |
+| Camera mounting or camera hardware | Recalibrate the relevant camera intrinsics/extrinsics on the bridge; also review `cameras.wrist.depth_min_range_m` and `depth_floor_band_share` |
+| Tool or gripper | Update the corresponding `robot` fields and the bridge configuration |
+
+The current template omits `workspace.floor_above_table_mm`. Add it explicitly to your profile
+if you require a minimum tool height above the table; `robot/rigs/x-arm6.yaml` uses `10.0` mm
+for the original workstation. Choose the value for your own setup.
+
+Once the profile and bridge credentials are ready, run from the repository root:
+
+```bash
+# Uses robot/rigs/my-rig.yaml, including its bridge.url
+STORM_RIG=my-rig python web/server.py --port 3008
+
+# Alternatively, select a YAML file outside the repository
+STORM_RIG=/absolute/path/my-rig.yaml python web/server.py --port 3008
+```
+
+No registration step is needed. The selected profile overrides `robot/robot.yaml` recursively
+by key; it does **not** inherit from `robot/rigs/x-arm6.yaml`. Without `STORM_RIG`, `x-arm6` is
+selected. The server's `--bridge` argument overrides the profile's bridge URL. Restart the
+server after editing a profile; configuration is read when the adapter is initialized.
+
+**Current limits:** not every scene assumption is configurable through YAML. Shared code still
+contains object-height acceptance limits, localization thresholds and motion-clearance margins.
+A missing or null `workspace.max_object_height_mm` falls back to a 160 mm assumption from
+LIBERO.
 
 ### Moving objects (dynamic tasks)
 
