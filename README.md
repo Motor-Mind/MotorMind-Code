@@ -6,7 +6,7 @@ Bingxuan Li\*, Siqi Song\*, Yizhuo Wu\*, Jiarui Yao, Tong Zhang, Huan Zhang
 
 University of Illinois Urbana-Champaign
 
-[Project page](https://motor-mind.github.io) · [Paper](https://arxiv.org/pdf/2609.38078)
+[Paper](https://arxiv.org/pdf/2609.38078) · [Project page](https://motor-mind.github.io) 
 
 ![MotorMind](https://motor-mind.github.io/static/images/motormind/teaser.png)
 
